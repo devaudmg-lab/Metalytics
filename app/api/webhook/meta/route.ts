@@ -90,16 +90,16 @@ export async function POST(req: NextRequest) {
       return field?.values?.[0] || "";
     };
 
-    const newLead = {
+const newLead = {
       meta_lead_id: leadgenId,
-      full_name: findField(["full_name", "full name", "name", "first_name"]),
-      email: findField(["email", "e-mail"]),
-      phone: findField(["phone_number", "phone", "mobile"]),
-      city: findField(["city", "town"]),
-      raw_data: leadDetails, // Keeping the full payload just in case
+      full_name: findField(["full_name", "name"]),
+      email: findField(["email"]),
+      phone: findField(["phone_number", "phone"]),
+      city: findField(["city"]),
+      postal_code: findField(["post_code", "post code", "postal_code"]), // Matches your schema
+      raw_data: leadDetails, // This goes into JSONB column
       created_at: leadDetails.created_time || new Date().toISOString(),
     };
-
     // Step 5: Insert or Update in Supabase
     // upsert ensures we don't save the same lead twice if Meta retries the webhook
     const { error } = await supabase
