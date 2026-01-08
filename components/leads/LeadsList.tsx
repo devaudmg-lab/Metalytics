@@ -76,7 +76,7 @@ const displayData = useMemo(() => {
     <div className="flex flex-col min-h-screen space-y-4 md:space-y-8 pb-10 md:pb-20 transition-colors duration-300">
       
       {/* 1. Control Hub - Responsive Sticky */}
-      <section className="sticky top-16 md:top-24 z-40 w-full animate-in fade-in slide-in-from-top-4 duration-500">
+      <section className="sticky top-0 z-40 w-full animate-in fade-in slide-in-from-top-4 duration-500">
         <ControlBar
           viewMode={viewMode}
           setViewMode={setViewMode}

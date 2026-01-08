@@ -133,7 +133,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
       <aside
         className={`${
           isMobileDetailOpen ? "hidden" : "flex"
-        } md:flex w-full md:w-80 flex-col border-r border-gray-100 dark:border-white/5 bg-gray-50/30 dark:bg-[#080808]`}
+        } lg:flex w-full lg:w-80 flex-col border-r border-gray-100 dark:border-white/5 bg-gray-50/30 dark:bg-[#080808]`}
       >
         <div className="p-4 md:p-6 space-y-4">
           <div className="flex items-center justify-between">
@@ -152,7 +152,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
             <input
               type="text"
               placeholder="Search leads..."
-              className="w-full bg-white dark:bg-zinc-900/50 border border-gray-200 dark:border-white/5 rounded-xl py-2.5 pl-9 pr-4 text-xs outline-none focus:border-primary-btn/30 transition-all placeholder:text-gray-700 dark:placeholder:text-zinc-700 shadow-sm"
+              className="w-full bg-white dark:bg-zinc-900/50 border border-gray-200 dark:border-white/5 rounded-xl py-2.5 pl-9 pr-4 text-lg outline-none focus:border-primary-btn/30 transition-all placeholder:text-gray-700 dark:placeholder:text-zinc-700 shadow-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -184,7 +184,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                     }`}
                 >
                   <div
-                    className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center font-bold text-xs transition-all
+                    className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center font-bold text-lg transition-all
                     ${
                       selectedId === lead.id
                         ? "bg-primary-btn text-white scale-105 shadow-lg shadow-primary-btn/20"
@@ -196,7 +196,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                   <div className="flex-1 truncate">
                     <div className="flex justify-between items-start">
                       <p
-                        className={`text-xs font-bold truncate ${
+                        className={`text-lg font-bold truncate ${
                           selectedId === lead.id
                             ? "text-primary-btn dark:text-white"
                             : "text-black dark:text-zinc-400"
@@ -214,7 +214,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                       />
                     </div>
 
-                    <p className="text-[9px] text-gray-700 dark:text-zinc-600 font-medium mt-0.5">
+                    <p className="text-[12px] text-gray-700 dark:text-zinc-600 font-medium mt-0.5">
                       {new Date(lead.created_at).toLocaleDateString()}
                     </p>
 
@@ -222,7 +222,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                     {!isAlreadyAllowed && leadZip && (
                       <div
                         onClick={(e) => openLocationModal(e, lead)}
-                        className="mt-3 inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[8px] font-bold uppercase hover:bg-emerald-600 hover:text-white transition-all cursor-pointer"
+                        className="mt-3 inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase hover:bg-emerald-600 hover:text-white transition-all cursor-pointer"
                       >
                         <MapPinned size={10} />
                         Add Postal Code
@@ -244,7 +244,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
       <div
         className={`${
           isMobileDetailOpen ? "flex" : "hidden"
-        } md:flex flex-1 flex-col md:flex-row overflow-hidden dark:bg-[#080808]`}
+        } lg:flex flex-1 flex-col lg:flex-row overflow-hidden dark:bg-[#080808]`}
       >
         {/* MAIN CHAT AREA */}
         <main className="flex-1 flex flex-col bg-white dark:bg-[#080808] relative overflow-y-auto transition-colors">
@@ -255,7 +255,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                 <div className="flex items-start gap-4">
                   <button
                     onClick={() => setIsMobileDetailOpen(false)}
-                    className="md:hidden p-2 -ml-2 bg-gray-100 dark:bg-zinc-800 rounded-full text-foreground"
+                    className="lg:hidden p-2 -ml-2 bg-gray-100 dark:bg-zinc-800 rounded-full text-foreground"
                   >
                     <ChevronLeft size={20} />
                   </button>
@@ -277,11 +277,11 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                       </div>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-gray-500 dark:text-zinc-500">
-                      <span className="flex items-center gap-1.5 text-[10px] md:text-xs font-semibold truncate max-w-[200px]">
+                      <span className="flex items-center gap-1.5 text-[10px] md:text-sm font-semibold truncate max-w-[200px]">
                         <Mail size={12} className="text-primary-btn" />{" "}
                         {selectedLead.email || "No Email"}
                       </span>
-                      <span className="flex items-center gap-1.5 text-[10px] md:text-xs font-semibold">
+                      <span className="flex items-center gap-1.5 text-[10px] md:text-sm font-semibold">
                         <Phone size={12} className="text-emerald-500" />{" "}
                         {selectedLead.phone || "No Phone"}
                       </span>
@@ -296,7 +296,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                       "_blank"
                     )
                   }
-                  className="w-full sm:w-auto flex items-center justify-center gap-3 bg-primary-btn text-white px-6 py-3 md:px-8 md:py-4 rounded-xl md:rounded-sm text-[10px] md:text-xs uppercase tracking-widest hover:brightness-110 shadow-lg shadow-primary-btn/20 transition-all"
+                  className="w-full sm:w-auto flex items-center justify-center gap-3 bg-primary-btn text-white px-6 py-3 md:px-8 md:py-4 rounded-xl md:rounded-sm text-[10px] md:text-sm uppercase tracking-widest hover:brightness-110 shadow-lg shadow-primary-btn/20 transition-all"
                 >
                   OPEN WHATSAPP <ExternalLink size={14} />
                 </button>
@@ -330,7 +330,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                   />
                 </section>
 
-                <div className="md:hidden mt-8">
+                <div className="lg:hidden mt-8">
                   <IntelligenceContent
                     selectedLead={selectedLead}
                     getRawData={getRawData}
@@ -341,7 +341,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-gray-700 p-10 text-center">
               <MessageSquare size={48} className="mb-4 opacity-20" />
-              <p className="text-xs uppercase tracking-widest">
+              <p className="text-lg uppercase tracking-widest">
                 Select a lead to view intelligence
               </p>
             </div>
@@ -349,7 +349,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
         </main>
 
         {/* RIGHT: INTELLIGENCE PANEL */}
-        <aside className="hidden md:block w-[350px] lg:w-[450px] border-l border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-[#080808] overflow-y-auto custom-scrollbar">
+        <aside className="hidden lg:block w-[350px] lg:w-[450px] border-l border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-[#080808] overflow-y-auto custom-scrollbar">
           <IntelligenceContent
             selectedLead={selectedLead}
             getRawData={getRawData}
@@ -390,7 +390,7 @@ function IntelligenceContent({ selectedLead, getRawData }: any) {
                 <p className="text-[9px] uppercase tracking-wider text-gray-700 dark:text-zinc-600 mb-1">
                   {field.name.replace(/_/g, " ")}
                 </p>
-                <p className="text-xs text-foreground font-bold break-words">
+                <p className="text-lg text-foreground font-bold break-words">
                   {field.values?.[0] || "No Answer"}
                 </p>
               </div>
