@@ -152,7 +152,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
             <input
               type="text"
               placeholder="Search leads..."
-              className="w-full bg-white dark:bg-zinc-900/50 border border-gray-200 dark:border-white/5 rounded-xl py-2.5 pl-9 pr-4 text-lg outline-none focus:border-primary-btn/30 transition-all placeholder:text-gray-700 dark:placeholder:text-zinc-700 shadow-sm"
+              className="w-full bg-white dark:bg-zinc-900/50 border border-gray-200 dark:border-white/5 rounded-xl py-2.5 pl-9 pr-4 md:text-lg text-sm outline-none focus:border-primary-btn/30 transition-all placeholder:text-gray-700 dark:placeholder:text-zinc-700 shadow-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -184,7 +184,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                     }`}
                 >
                   <div
-                    className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center font-bold text-lg transition-all
+                    className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center font-bold md:text-lg text-sm transition-all
                     ${
                       selectedId === lead.id
                         ? "bg-primary-btn text-white scale-105 shadow-lg shadow-primary-btn/20"
@@ -196,7 +196,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                   <div className="flex-1 truncate">
                     <div className="flex justify-between items-start">
                       <p
-                        className={`text-lg font-bold truncate ${
+                        className={`md:text-lg text-sm font-bold truncate ${
                           selectedId === lead.id
                             ? "text-primary-btn dark:text-white"
                             : "text-black dark:text-zinc-400"
@@ -261,7 +261,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                   </button>
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-2xl md:text-4xl text-foreground tracking-tight leading-none italic font-bold">
+                      <h2 className="text-xl sm:text-2xl md:text-4xl text-foreground tracking-tight leading-none italic font-bold">
                         {selectedLead.full_name}
                       </h2>
                       <div className="flex gap-2">
@@ -323,7 +323,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                   </div>
                   <textarea
                     key={selectedLead.id}
-                    className="w-full bg-gray-50 dark:bg-zinc-900/40 border border-gray-200 dark:border-white/10 rounded-[1.5rem] md:rounded-sm p-6 md:p-8 text-sm md:text-lg text-foreground outline-none focus:border-primary-btn/40 transition-all min-h-[200px] md:min-h-[300px] shadow-inner"
+                    className="w-full bg-gray-50 dark:bg-zinc-900/40 border border-gray-200 dark:border-white/10 rounded-[1.5rem] md:rounded-sm p-6 md:p-8 text-sm md:md:text-lg text-sm text-foreground outline-none focus:border-primary-btn/40 transition-all min-h-[200px] md:min-h-[300px] shadow-inner"
                     placeholder="Type notes about this lead..."
                     defaultValue={selectedLead.notes || ""}
                     onBlur={(e) => onSave(selectedLead.id, e.target.value)}
@@ -341,7 +341,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-gray-700 p-10 text-center">
               <MessageSquare size={48} className="mb-4 opacity-20" />
-              <p className="text-lg uppercase tracking-widest">
+              <p className="md:text-lg text-sm uppercase tracking-widest">
                 Select a lead to view intelligence
               </p>
             </div>
@@ -390,7 +390,7 @@ function IntelligenceContent({ selectedLead, getRawData }: any) {
                 <p className="text-[9px] uppercase tracking-wider text-gray-700 dark:text-zinc-600 mb-1">
                   {field.name.replace(/_/g, " ")}
                 </p>
-                <p className="text-lg text-foreground font-bold break-words">
+                <p className="md:text-lg text-sm text-foreground font-bold break-words">
                   {field.values?.[0] || "No Answer"}
                 </p>
               </div>

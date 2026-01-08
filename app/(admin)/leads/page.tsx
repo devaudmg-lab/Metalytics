@@ -22,7 +22,7 @@ export default async function LeadsPage() {
       <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary-btn/5 blur-[100px] rounded-full -z-10" />
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-emerald-500/5 blur-[100px] rounded-full -z-10" />
 
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div className="mx-auto lg:px-8 space-y-8">
         
         {/* Main Content Area */}
         <div className="relative animate-in fade-in slide-in-from-bottom-6 duration-1000">

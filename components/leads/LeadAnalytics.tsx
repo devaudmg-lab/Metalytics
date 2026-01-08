@@ -116,7 +116,7 @@ export default function LeadAnalytics({ data }: { data: any[] }) {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Daily Trend Area Chart */}
-          <div className="lg:col-span-2 bg-card border border-gray-200 dark:border-white/5 p-6 md:p-8 rounded-sm md:rounded-sm h-[400px] md:h-[450px]">
+          <div className="lg:col-span-2 bg-card border border-gray-200 dark:border-white/5 md:p-8 rounded-sm md:rounded-sm h-[400px] md:h-[450px]">
             <div className="flex justify-between items-center mb-10">
               <h4 className="text-foreground  text-[11px] uppercase tracking-[0.3em] flex items-center gap-2">
                 <TrendingUp size={16} className="text-primary-btn"/> Quality Trajectory
@@ -140,7 +140,7 @@ export default function LeadAnalytics({ data }: { data: any[] }) {
           </div>
 
           {/* Hourly Heatmap */}
-          <div className="bg-card border border-gray-200 dark:border-white/5 p-6 md:p-8 rounded-sm md:rounded-sm h-[400px] md:h-[450px]">
+          <div className="bg-card border border-gray-200 dark:border-white/5 md:p-8 rounded-sm md:rounded-sm h-[400px] md:h-[450px]">
             <h4 className="text-foreground  text-[11px] uppercase tracking-[0.3em] mb-10 flex items-center gap-2">
               <Clock size={16} className="text-emerald-500"/> Peak Inflow
             </h4>
@@ -154,7 +154,7 @@ export default function LeadAnalytics({ data }: { data: any[] }) {
           </div>
 
           {/* Regional Market Share Bar Chart */}
-          <div className="lg:col-span-3 bg-card border border-gray-200 dark:border-white/5 p-6 md:p-10 rounded-sm md:rounded-[3.5rem]">
+          <div className="lg:col-span-3 bg-card border border-gray-200 dark:border-white/5 md:p-10 rounded-sm md:rounded-[3.5rem]">
             <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
               <div className="text-center md:text-left">
                 <h4 className="text-foreground  text-sm uppercase tracking-[0.4em] flex items-center justify-center md:justify-start gap-2">
