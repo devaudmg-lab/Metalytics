@@ -6,10 +6,6 @@ import { BarChart3, MapPin, ArrowRight, Zap } from "lucide-react";
 export default function HomePage() {
   return (
     <div className="min-h-[90vh] flex flex-col items-center justify-center bg-background text-foreground selection:bg-primary-btn/30 overflow-x-hidden relative py-12 md:py-0 transition-colors duration-300">
-      
-      {/* Background Glows - Subtle for both themes */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] md:w-[800px] h-[300px] md:h-[500px] bg-primary-btn/10 dark:bg-primary-btn/5 blur-[80px] md:blur-[120px] rounded-full -z-10" />
-      <div className="absolute bottom-0 right-0 w-[250px] md:w-[500px] h-[250px] md:h-[500px] bg-emerald-500/10 dark:bg-emerald-500/5 blur-[70px] md:blur-[100px] rounded-full -z-10" />
 
       <div className="max-w-5xl w-full text-center px-5 sm:px-8">
         
@@ -17,7 +13,7 @@ export default function HomePage() {
         <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-card dark:bg-white/5 border border-gray-200 dark:border-white/10 mb-6 md:mb-8 shadow-sm">
           <Zap size={12} className="text-primary-btn fill-primary-btn md:w-[14px]" />
           <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-zinc-400">
-            v2.0 Real-time Engine
+            v1.0 Real-time Engine
           </span>
         </div>
 

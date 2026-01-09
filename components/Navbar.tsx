@@ -4,12 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, MapPinned, Activity, Menu, X, Sun, Moon } from 'lucide-react';
 import { useState } from 'react';
-import { useTheme } from '@/context/ThemeContext'; // 1. Import Hook
+import { useTheme } from '@/context/ThemeContext'; 
 
 export default function Navbar() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme(); // 2. Consume Context
+  const { theme, toggleTheme } = useTheme();
 
   const isActive = (path: string) => pathname === path;
 

@@ -31,11 +31,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.classList.toggle("dark", newTheme === "dark");
   };
 
-  // Render children immediately but don't provide context until mounted to avoid hydration error
-  // However, to satisfy TS and avoid the "useTheme" error, we return the Provider
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {/* Mounted check avoids UI flicker, but Provider must always wrap children */}
       <div style={{ visibility: mounted ? "visible" : "hidden" }}>
         {children}
       </div>

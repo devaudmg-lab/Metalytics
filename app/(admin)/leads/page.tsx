@@ -25,8 +25,7 @@ export default async function LeadsPage() {
       <div className="mx-auto lg:px-8 space-y-8">
         
         {/* Main Content Area */}
-        <div className="relative animate-in fade-in slide-in-from-bottom-6 duration-1000">
-          {/* Note: Ensure LeadsList component also uses bg-card and adaptive text colors */}
+        <div className="relative">
           <LeadsList initialLeads={initialLeads || []} />
         </div>
 

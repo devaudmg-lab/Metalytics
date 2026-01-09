@@ -1,8 +1,7 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *)); /* Ye line add karein */
+@custom-variant dark (&:where(.dark, .dark *));
 
-/* 1. Base Variables & Light Mode */
 :root {
   --background: #f8f0f0;
   --foreground: #171717;
@@ -10,12 +9,9 @@
   --toggle-bg: #e1edf7;
   --button-primary: #0a78be;
   --border: #e2e8f0;
-  
-  --font-montserrat:"Arial Black";
+  --font-Arial:"Arial Black";
 }
 
-/* 2. Manual Dark Mode Fix */
-/* Pehle yahan @media tha, ab .dark class hai jo toggle button ke sath kaam karegi */
 .dark {
   --background: #0a0a0a;
   --foreground: #ededed;
@@ -33,7 +29,7 @@
   --color-primary-btn: var(--button-primary);
   --color-border-custom: var(--border);
   
-  --font-sans: var(--font-montserrat);
+  --font-sans: var(--font-Arial);
   --font-mono: "JetBrains Mono", "Geist Mono", monospace;
   
   --animate-shimmer: shimmer 2s infinite;
@@ -43,18 +39,17 @@
   }
 }
 
-/* 3. Global Styles */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-montserrat);
+  font-family: var(--font-Arial);
   transition: background-color 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6, button, input, textarea, select {
-  font-family: var(--font-montserrat);
+  font-family: var(--font-Arial);
 }
 
 @layer utilities {

@@ -14,6 +14,8 @@ import {
   MessageSquare,
   MapPinned,
   X,
+  Copy,
+  Check,
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import AddLocationForm from "../locations/AddLocationForm";
@@ -30,6 +32,9 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
   const [allowedZips, setAllowedZips] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeLeadData, setActiveLeadData] = useState({ city: "", zip: "" });
+
+  const [copied,setCopied] = useState(false)
+
 
   // 1. Fetch existing allowed postal codes on mount
   useEffect(() => {
@@ -97,6 +102,13 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
     setIsModalOpen(true);
   };
 
+
+const handleCopy = async () => {
+  await navigator.clipboard.writeText(selectedLead.email);
+  setCopied(true);
+  setTimeout(() => setCopied(false), 2000); // 2 second baad reset
+};
+
   return (
     <div className="flex h-[calc(100vh-180px)] md:h-[calc(100vh-200px)] w-full gap-0 bg-card dark:bg-[#050505] text-foreground antialiased overflow-hidden border border-gray-200 dark:border-white/5 rounded-sm md:rounded-sm shadow-xl relative transition-colors duration-300">
       {/* MODAL OVERLAY */}
@@ -105,13 +117,13 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
           <div className="bg-card dark:bg-[#0a0a0a] w-full max-w-lg rounded-sm border border-gray-200 dark:border-white/10 shadow-2xl overflow-hidden">
             <div className="p-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-white/[0.02]">
               <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-500 flex items-center gap-2">
-                <MapPinned size={14} /> Add Service Region (VIC)
+                <MapPinned size={14} /> Add Service Region
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-full transition-colors"
               >
-                <X size={18} />
+                <X size={18} className="cursor-pointer"/>
               </button>
             </div>
             <div className="p-8">
@@ -140,7 +152,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
             <h3 className="text-[10px] tracking-[0.3em] text-primary-btn uppercase">
               Incoming
             </h3>
-            <span className="px-2 py-0.5 rounded-smd bg-primary-btn/10 text-primary-btn text-[9px] font-bold">
+            <span className="px-2 py-0.5 rounded-smd bg-primary-btn/10 text-primary-btn text-lg font-bold">
               {filteredLeads.length} Leads
             </span>
           </div>
@@ -277,9 +289,10 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                       </div>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-gray-500 dark:text-zinc-500">
-                      <span className="flex items-center gap-1.5 text-[10px] md:text-sm font-semibold truncate max-w-[200px]">
+                      <span className="flex items-center gap-1.5 text-[10px] md:text-sm font-semibold truncate max-w-[300px]">
                         <Mail size={12} className="text-primary-btn" />{" "}
                         {selectedLead.email || "No Email"}
+                        {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} className="text-primary-btn cursor-pointer" onClick={()=>handleCopy()}/>}
                       </span>
                       <span className="flex items-center gap-1.5 text-[10px] md:text-sm font-semibold">
                         <Phone size={12} className="text-emerald-500" />{" "}
