@@ -29,7 +29,7 @@
   --color-toggle: var(--toggle-bg);
   --color-primary-btn: var(--button-primary);
   --color-border-custom: var(--border);
-  --color-tx-black:var(--tx-black)
+  --color-tx-black:var(--tx-black);
   
   --font-sans: var(--font-Arial);
   --font-mono: "JetBrains Mono", "Geist Mono", monospace;
