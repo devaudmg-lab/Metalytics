@@ -116,7 +116,7 @@ const handleCopy = async () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-card dark:bg-[#0a0a0a] w-full max-w-lg rounded-sm border border-gray-200 dark:border-white/10 shadow-2xl overflow-hidden">
             <div className="p-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-white/[0.02]">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-500 flex items-center gap-2">
+              <h3 className="text-sm font-bold uppercase  text-primary-btn flex items-center gap-2">
                 <MapPinned size={14} /> Add Service Region
               </h3>
               <button
@@ -145,14 +145,14 @@ const handleCopy = async () => {
       <aside
         className={`${
           isMobileDetailOpen ? "hidden" : "flex"
-        } lg:flex w-full lg:w-80 flex-col border-r border-gray-100 dark:border-white/5 bg-gray-50/30 dark:bg-[#080808]`}
+        } lg:flex w-full lg:w-80 flex-col border-r border-gray-100 dark:border-white/5 bg-white dark:bg-[#080808]`}
       >
         <div className="p-4 md:p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-[10px] tracking-[0.3em] text-primary-btn uppercase">
+            <h3 className="text-[10px] md:text-[15px] text-primary-btn font-semibold">
               Incoming
             </h3>
-            <span className="px-2 py-0.5 rounded-smd bg-primary-btn/10 text-primary-btn text-lg font-bold">
+            <span className="px-2 py-0.5 rounded-smd bg-primary-btn/10 text-primary-btn text-[10px] md:text-[15px] font-bold">
               {filteredLeads.length} Leads
             </span>
           </div>
@@ -164,7 +164,7 @@ const handleCopy = async () => {
             <input
               type="text"
               placeholder="Search leads..."
-              className="w-full bg-white dark:bg-zinc-900/50 border border-gray-200 dark:border-white/5 rounded-xl py-2.5 pl-9 pr-4 md:text-lg text-sm outline-none focus:border-primary-btn/30 transition-all placeholder:text-gray-700 dark:placeholder:text-zinc-700 shadow-sm"
+              className="w-full bg-white dark:bg-zinc-900/50 border border-gray-200 dark:border-white/5 py-2.5 pl-9 pr-4 md:text-lg text-sm outline-none focus:border-primary-btn/30 transition-all placeholder:text-gray-700 dark:placeholder:text-zinc-700 shadow-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -188,27 +188,17 @@ const handleCopy = async () => {
                 <button
                   key={lead.id}
                   onClick={() => handleSelectLead(lead.id)}
-                  className={`w-full text-left p-4 mb-2 rounded-sm transition-all duration-300 flex items-start gap-3 relative group cursor-pointer
+                  className={`w-full text-left p-4 mb-2 border border-gray-300 rounded-sm transition-all duration-300 flex items-start gap-3 relative group cursor-pointer
                     ${
                       lead.is_filtered
                         ? "bg-white dark:bg-zinc-700/10"
-                        : "bg-red-200/30 dark:bg-red-900/10 border border-red-500/10"
+                        : "bg-red-200/30 dark:bg-red-900/10"
                     }`}
                 >
-                  <div
-                    className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center font-bold md:text-lg text-sm transition-all
-                    ${
-                      selectedId === lead.id
-                        ? "bg-primary-btn text-white scale-105 shadow-lg shadow-primary-btn/20"
-                        : "bg-gray-200 dark:bg-zinc-800 text-gray-500 dark:text-zinc-500"
-                    }`}
-                  >
-                    {lead.full_name?.charAt(0) || "?"}
-                  </div>
                   <div className="flex-1 truncate">
                     <div className="flex justify-between items-start">
                       <p
-                        className={`md:text-lg text-sm font-bold truncate ${
+                        className={`md:text-lg text-sm font-semibold truncate ${
                           selectedId === lead.id
                             ? "text-primary-btn dark:text-white"
                             : "text-black dark:text-zinc-400"
@@ -226,26 +216,28 @@ const handleCopy = async () => {
                       />
                     </div>
 
-                    <p className="text-[12px] text-gray-700 dark:text-zinc-600 font-medium mt-0.5">
+<div className="flex justify-between">
+
+                    <p className="text-sm text-gray-700 dark:text-zinc-600 font-medium">
                       {new Date(lead.created_at).toLocaleDateString()}
                     </p>
 
                     {/* ADD POSTAL TAG - Only rendered if NOT in allowedZips and leadZip exists */}
                     {!isAlreadyAllowed && leadZip && (
                       <div
-                        onClick={(e) => openLocationModal(e, lead)}
-                        className="mt-3 inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase hover:bg-emerald-600 hover:text-white transition-all cursor-pointer"
+                      onClick={(e) => openLocationModal(e, lead)}
+                      className="inline-flex items-center p-1 rounded-sm bg-primary-btn border border-emerald-500/20 text-white dark:text-white text-sm font-bold cursor-pointer"
                       >
-                        <MapPinned size={10} />
-                        Add Postal Code
+                        <MapPinned size={14} />
                       </div>
                     )}
+                      </div>
                   </div>
                 </button>
               );
             })
           ) : (
-            <div className="text-center py-10 text-gray-700 text-[10px] font-bold uppercase tracking-widest">
+            <div className="text-center py-10 text-gray-700 text-[10px] font-bold uppercase ">
               No results
             </div>
           )}
@@ -263,7 +255,7 @@ const handleCopy = async () => {
           {selectedLead ? (
             <div className="flex flex-col h-full">
               {/* Header */}
-              <header className="p-6 md:p-10 flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-gray-100 dark:border-white/5 bg-gray-50/20 dark:bg-white/[0.01]">
+              <header className="p-6 md:p-10 flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-gray-100 dark:border-white/5 bg-white dark:bg-white/[0.01]">
                 <div className="flex items-start gap-4">
                   <button
                     onClick={() => setIsMobileDetailOpen(false)}
@@ -273,12 +265,12 @@ const handleCopy = async () => {
                   </button>
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-xl sm:text-2xl md:text-4xl text-foreground tracking-tight leading-none italic font-bold">
+                      <h2 className="text-xl sm:text-2xl md:text-4xl text-foreground  leading-none  font-semibold">
                         {selectedLead.full_name}
                       </h2>
                       <div className="flex gap-2">
                         <div
-                          className={`px-2 py-1 rounded-smd border text-[8px] uppercase tracking-widest ${
+                          className={`px-2 py-1 rounded-smd border text-[10px] uppercase  ${
                             selectedLead.is_filtered
                               ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
                               : "bg-red-500/10 border-red-500/20 text-red-500"
@@ -289,12 +281,12 @@ const handleCopy = async () => {
                       </div>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-gray-500 dark:text-zinc-500">
-                      <span className="flex items-center gap-1.5 text-[10px] md:text-sm font-semibold truncate max-w-[300px]">
+                      <span className="flex items-center gap-1.5 text-[11px] md:text-sm  truncate max-w-[300px] text-gray-700">
                         <Mail size={12} className="text-primary-btn" />{" "}
                         {selectedLead.email || "No Email"}
                         {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} className="text-primary-btn cursor-pointer" onClick={()=>handleCopy()}/>}
                       </span>
-                      <span className="flex items-center gap-1.5 text-[10px] md:text-sm font-semibold">
+                      <span className="flex items-center gap-1.5 text-[11px] md:text-sm text-gray-700">
                         <Phone size={12} className="text-emerald-500" />{" "}
                         {selectedLead.phone || "No Phone"}
                       </span>
@@ -309,7 +301,7 @@ const handleCopy = async () => {
                       "_blank"
                     )
                   }
-                  className="w-full sm:w-auto flex items-center justify-center gap-3 bg-primary-btn text-white px-6 py-3 md:px-8 md:py-4 rounded-xl md:rounded-sm text-[10px] md:text-sm uppercase tracking-widest hover:brightness-110 shadow-lg shadow-primary-btn/20 transition-all"
+                  className="w-full sm:w-auto flex items-center justify-center gap-3 bg-primary-btn text-white px-2 py-1 md:px-4 md:py-2 rounded-xl md:rounded-sm text-[10px] md:text-sm uppercase  hover:brightness-110 transition-all"
                 >
                   OPEN WHATSAPP <ExternalLink size={14} />
                 </button>
@@ -323,7 +315,7 @@ const handleCopy = async () => {
                       <div className="p-2 bg-primary-btn/10 rounded-lg">
                         <StickyNote size={16} className="text-primary-btn" />
                       </div>
-                      <span className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-500">
+                      <span className="text-[15px]  text-gray-500 dark:text-zinc-500">
                         Internal Observations
                       </span>
                     </div>
@@ -354,7 +346,7 @@ const handleCopy = async () => {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-gray-700 p-10 text-center">
               <MessageSquare size={48} className="mb-4 opacity-20" />
-              <p className="md:text-lg text-sm uppercase tracking-widest">
+              <p className="md:text-lg text-sm uppercase ">
                 Select a lead to view intelligence
               </p>
             </div>
@@ -362,7 +354,7 @@ const handleCopy = async () => {
         </main>
 
         {/* RIGHT: INTELLIGENCE PANEL */}
-        <aside className="hidden lg:block w-[350px] lg:w-[450px] border-l border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-[#080808] overflow-y-auto custom-scrollbar">
+        <aside className="hidden lg:block w-[350px] lg:w-[450px] border-l border-gray-100 dark:border-white/5 bg-white dark:bg-[#080808] overflow-y-auto custom-scrollbar">
           <IntelligenceContent
             selectedLead={selectedLead}
             getRawData={getRawData}
@@ -380,7 +372,7 @@ function IntelligenceContent({ selectedLead, getRawData }: any) {
   return (
     <div className="p-6 md:p-8 space-y-8">
       <div className="space-y-2">
-        <h3 className="text-foreground text-[11px] uppercase tracking-[0.4em] flex items-center gap-2">
+        <h3 className="text-foreground text-[10px] md:text-[15px] flex items-center gap-2 font-semibold">
           <ClipboardList size={14} className="text-primary-btn" /> Lead Data
           Intelligence
         </h3>
@@ -398,12 +390,12 @@ function IntelligenceContent({ selectedLead, getRawData }: any) {
             return (
               <div
                 key={i}
-                className="p-5 rounded-sm bg-white dark:bg-zinc-900/50 border border-gray-100 dark:border-white/5 shadow-sm transition-all hover:border-primary-btn/20"
+                className="p-5 rounded-sm bg-white dark:bg-zinc-900/50 border border-gray-300 dark:border-white/5 transition-all hover:border-primary-btn/20"
               >
-                <p className="text-[9px] uppercase tracking-wider text-gray-700 dark:text-zinc-600 mb-1">
+                <p className="text-xs uppercase  text-gray-700 dark:text-zinc-600 mb-1">
                   {field.name.replace(/_/g, " ")}
                 </p>
-                <p className="md:text-lg text-sm text-foreground font-bold break-words">
+                <p className="md:text-[15px] text-sm text-foreground font-[550] wrap-break-word">
                   {field.values?.[0] || "No Answer"}
                 </p>
               </div>
@@ -412,17 +404,17 @@ function IntelligenceContent({ selectedLead, getRawData }: any) {
         )}
       </div>
 
-      <div className="pt-6 border-t border-gray-100 dark:border-white/5 space-y-4">
-        <div className="flex justify-between items-center text-[10px] font-bold">
-          <span className="text-gray-700 dark:text-zinc-600 uppercase tracking-widest">
+      <div className="pt-6 border-t border-gray-100 dark:border-white/5 space-y-2 text-[12px]">
+        <div className="flex justify-between items-center font-bold">
+          <span className="text-gray-700 dark:text-zinc-600  ">
             Meta Lead ID
           </span>
           <span className="text-foreground font-mono bg-gray-100 dark:bg-white/5 px-2 py-1 rounded">
             {selectedLead.meta_lead_id || "N/A"}
           </span>
         </div>
-        <div className="flex justify-between items-center text-[10px] font-bold">
-          <span className="text-gray-700 dark:text-zinc-600 uppercase tracking-widest">
+        <div className="flex justify-between items-center font-bold">
+          <span className="text-gray-700 dark:text-zinc-600  ">
             Capture Date(IND)
           </span>
           <span className="text-foreground">
@@ -436,8 +428,8 @@ function IntelligenceContent({ selectedLead, getRawData }: any) {
             })}
           </span>
         </div>
-        <div className="flex justify-between items-center text-[10px] font-bold">
-          <span className="text-gray-700 dark:text-zinc-600 uppercase tracking-widest">
+        <div className="flex justify-between items-center font-bold">
+          <span className="text-gray-700 dark:text-zinc-600  ">
             Capture Date(AUS)
           </span>
           <span className="text-foreground">

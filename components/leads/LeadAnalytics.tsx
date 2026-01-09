@@ -19,9 +19,9 @@ function MetricCard({ label, val, sub, icon, color, glow }: any) {
         <div className={`mb-3 w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center mx-auto sm:mx-0 ${color}`}>
           {icon}
         </div>
-        <p className="text-gray-500 dark:text-zinc-500 text-[10px]  uppercase tracking-[0.2em]">{label}</p>
-        <h3 className="text-3xl  text-foreground mt-1 tracking-tighter">{val}</h3>
-        <p className="text-gray-700 dark:text-zinc-600 text-[9px] font-bold mt-1 uppercase tracking-widest">{sub}</p>
+        <p className="text-gray-500 dark:text-zinc-500 text-[10px]  uppercase ">{label}</p>
+        <h3 className="text-3xl  text-foreground mt-1 er">{val}</h3>
+        <p className="text-gray-700 dark:text-zinc-600 text-[9px] font-bold mt-1 uppercase ">{sub}</p>
       </div>
     </div>
   );
@@ -92,13 +92,13 @@ export default function LeadAnalytics({ data }: { data: any[] }) {
         <div className="bg-white/80 dark:bg-black/60 backdrop-blur-xl border border-gray-200 dark:border-white/10 px-6 py-2 rounded-full flex items-center gap-6 shadow-xl pointer-events-auto">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary-btn animate-pulse" />
-            <span className="text-[10px]  uppercase tracking-widest text-gray-500 dark:text-zinc-400">Verified:</span>
+            <span className="text-[10px]  uppercase  text-gray-500 dark:text-zinc-400">Verified:</span>
             <span className="text-sm  text-foreground">{stats.verified}</span>
           </div>
           <div className="w-px h-4 bg-gray-200 dark:bg-white/10" />
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-red-500" />
-            <span className="text-[10px]  uppercase tracking-widest text-gray-500 dark:text-zinc-400">Flagged:</span>
+            <span className="text-[10px]  uppercase  text-gray-500 dark:text-zinc-400">Flagged:</span>
             <span className="text-sm  text-foreground">{stats.outside}</span>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function LeadAnalytics({ data }: { data: any[] }) {
           {/* Daily Trend Area Chart */}
           <div className="lg:col-span-2 bg-card border border-gray-200 dark:border-white/5 md:p-8 rounded-sm md:rounded-sm h-[400px] md:h-[450px]">
             <div className="flex justify-between items-center mb-10">
-              <h4 className="text-foreground  text-[11px] uppercase tracking-[0.3em] flex items-center gap-2">
+              <h4 className="text-foreground  text-[11px] uppercase  flex items-center gap-2">
                 <TrendingUp size={16} className="text-primary-btn"/> Quality Trajectory
               </h4>
             </div>
@@ -141,7 +141,7 @@ export default function LeadAnalytics({ data }: { data: any[] }) {
 
           {/* Hourly Heatmap */}
           <div className="bg-card border border-gray-200 dark:border-white/5 md:p-8 rounded-sm md:rounded-sm h-[400px] md:h-[450px]">
-            <h4 className="text-foreground  text-[11px] uppercase tracking-[0.3em] mb-10 flex items-center gap-2">
+            <h4 className="text-foreground  text-[11px] uppercase  mb-10 flex items-center gap-2">
               <Clock size={16} className="text-emerald-500"/> Peak Inflow
             </h4>
             <ResponsiveContainer width="100%" height="80%">
@@ -157,21 +157,21 @@ export default function LeadAnalytics({ data }: { data: any[] }) {
           <div className="lg:col-span-3 bg-card border border-gray-200 dark:border-white/5 md:p-10 rounded-sm md:rounded-[3.5rem]">
             <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
               <div className="text-center md:text-left">
-                <h4 className="text-foreground  text-sm uppercase tracking-[0.4em] flex items-center justify-center md:justify-start gap-2">
+                <h4 className="text-foreground  text-sm uppercase  flex items-center justify-center md:justify-start gap-2">
                   <Map size={20} className="text-primary-btn"/> Regional Intelligence
                 </h4>
-                <p className="text-gray-700 dark:text-zinc-600 text-[10px] mt-2  uppercase tracking-widest">Market distribution by zip</p>
+                <p className="text-gray-700 dark:text-zinc-600 text-[10px] mt-2  uppercase ">Market distribution by zip</p>
               </div>
               <div className="flex flex-wrap justify-center gap-3">
                 <button 
                   onClick={() => setLimitZips(!limitZips)}
-                  className="bg-gray-100 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 text-black dark:text-zinc-400 px-4 md:px-6 py-2.5 rounded-xl text-[9px]  uppercase tracking-[0.2em] hover:text-primary-btn transition-all"
+                  className="bg-gray-100 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 text-black dark:text-zinc-400 px-4 md:px-6 py-2.5 rounded-xl text-[9px]  uppercase  hover:text-primary-btn transition-all"
                 >
                   {limitZips ? "Expand" : "Collapse"}
                 </button>
                 <button 
                   onClick={generateReport}
-                  className="bg-primary-btn text-white px-6 md:px-8 py-2.5 rounded-xl text-[9px]  uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg hover:brightness-110 transition-all"
+                  className="bg-primary-btn text-white px-6 md:px-8 py-2.5 rounded-xl text-[9px]  uppercase  flex items-center gap-2 shadow-lg hover:brightness-110 transition-all"
                 >
                   <Download size={14}/> Export XLSX
                 </button>

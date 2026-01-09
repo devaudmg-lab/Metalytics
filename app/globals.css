@@ -9,16 +9,17 @@
   --toggle-bg: #e1edf7;
   --button-primary: #0a78be;
   --border: #e2e8f0;
-  --font-Arial:"Arial Black";
+  --font-Arial:"Arial";
+  --tx-black:#101828;
 }
 
 .dark {
-  --background: #0a0a0a;
+  --background: #030712;
   --foreground: #ededed;
-  --card: #161616;
-  --toggle-bg: #1e293b;
-  --button-primary: #3b82f6;
-  --border: #262626;
+  --card: #101828;
+  --toggle-bg: #101828;
+  --button-primary: #432dd7;
+  --border: #101828;
 }
 
 @theme inline {
@@ -28,6 +29,7 @@
   --color-toggle: var(--toggle-bg);
   --color-primary-btn: var(--button-primary);
   --color-border-custom: var(--border);
+  --color-tx-black:var(--tx-black)
   
   --font-sans: var(--font-Arial);
   --font-mono: "JetBrains Mono", "Geist Mono", monospace;
@@ -40,7 +42,12 @@
 }
 
 body {
-  background: var(--background);
+    min-height: 100vh;
+  background:
+    radial-gradient(at top left,     #faf1f1 0%, transparent 70%),
+    radial-gradient(at top right,    #e5f0fa 0%, transparent 70%),
+    radial-gradient(at bottom left,  #e5f0fa 0%, transparent 70%),
+    radial-gradient(at bottom right, #e9f6ee 0%, transparent 70%);
   color: var(--foreground);
   font-family: var(--font-Arial);
   transition: background-color 0.3s ease, color 0.3s ease;

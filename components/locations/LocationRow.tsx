@@ -52,10 +52,10 @@ export default function LocationRow({ loc }: { loc: any }) {
           </div>
         ) : (
           <div className="flex flex-col">
-            <p className="text-foreground  text-xl tracking-tighter uppercase group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+            <p className="text-foreground  text-xl er uppercase group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
               {loc.city_name}
             </p>
-            <span className="text-[9px]  text-gray-700 dark:text-zinc-600 uppercase tracking-[0.2em]">Service City</span>
+            <span className="text-[9px]  text-gray-700 dark:text-zinc-600 uppercase ">Service City</span>
           </div>
         )}
       </td>
@@ -74,7 +74,7 @@ export default function LocationRow({ loc }: { loc: any }) {
         ) : (
           <div className="flex items-center gap-3">
             <div className="w-1.5 h-1.5 rounded-full bg-gray-200 dark:bg-zinc-800 group-hover:bg-emerald-500 transition-colors" />
-            <span className="text-gray-500 dark:text-zinc-400 font-mono text-sm tracking-[0.2em] font-bold">
+            <span className="text-gray-500 dark:text-zinc-400 font-mono text-sm  font-bold">
               {loc.postal_code}
             </span>
           </div>
@@ -92,7 +92,7 @@ export default function LocationRow({ loc }: { loc: any }) {
             <div className={`w-14 h-7 rounded-full relative p-1 transition-all duration-500 ${loc.is_serving ? 'bg-emerald-500/10 dark:bg-emerald-600/20 border border-emerald-500/30' : 'bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-white/5'}`}>
               <div className={`w-5 h-5 rounded-full transition-all duration-500 shadow-lg ${loc.is_serving ? 'translate-x-7 bg-emerald-600 dark:bg-emerald-500 shadow-emerald-500/50' : 'translate-x-0 bg-gray-400 dark:bg-zinc-600'}`} />
             </div>
-            <span className={`text-[9px]  uppercase tracking-widest transition-colors ${loc.is_serving ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-700 dark:text-zinc-600'}`}>
+            <span className={`text-[9px]  uppercase  transition-colors ${loc.is_serving ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-700 dark:text-zinc-600'}`}>
               {loc.is_serving ? 'Active' : 'Paused'}
             </span>
           </button>

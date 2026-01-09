@@ -64,7 +64,7 @@ const DualCalendar = ({ startDate, setStartDate, endDate, setEndDate }: any) => 
           <div
             key={d.toString()}
             onClick={() => !isDifferentMonth && handleDateClick(d)}
-            className={`relative h-10 w-full flex items-center justify-center text-[11px] cursor-pointer transition-all
+            className={`relative h-10 w-full flex items-center justify-center text-[15px] cursor-pointer transition-all
               ${isDifferentMonth ? "text-transparent pointer-events-none" : "text-foreground font-medium"}
               ${inRange && !isSelected ? "bg-primary-btn/10" : ""}
               ${isSelected ? "bg-primary-btn text-white rounded-md z-10" : "hover:bg-gray-100 dark:hover:bg-white/5 rounded-md"}
@@ -76,7 +76,7 @@ const DualCalendar = ({ startDate, setStartDate, endDate, setEndDate }: any) => 
         );
         day = addDays(day, 1);
       }
-      rows.push(<div key={day.toString()} className="grid grid-cols-7 gap-0">{days}</div>);
+      rows.push(<div key={day.toString()} className="grid grid-cols-7 gap-0 ">{days}</div>);
       days = [];
     }
     return rows;
@@ -93,7 +93,7 @@ const DualCalendar = ({ startDate, setStartDate, endDate, setEndDate }: any) => 
             >
               <ChevronLeft size={16} />
             </button>
-            <span className="text-[11px] font-bold uppercase tracking-widest">{format(m, "MMMM yyyy")}</span>
+            <span className="text-[11px] font-bold uppercase ">{format(m, "MMMM yyyy")}</span>
             <button 
               onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} 
               className={`p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-full ${(idx === 0 && !isMobile) ? 'invisible' : ''}`}
@@ -103,7 +103,7 @@ const DualCalendar = ({ startDate, setStartDate, endDate, setEndDate }: any) => 
           </div>
           <div className="grid grid-cols-7 mb-2">
             {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-              <div key={d} className="text-[9px] text-center text-gray-400 font-bold uppercase">{d}</div>
+              <div key={d} className="text-[12px] text-center text-gray-600 font-bold uppercase">{d}</div>
             ))}
           </div>
           {renderMonth(m)}
@@ -186,62 +186,85 @@ export default function ControlBar({
       {/* Group 2: Actions and Filters */}
       <div className="flex flex-col sm:flex-row items-stretch gap-3">
         {/* DATE PICKER */}
-        <div className="relative" ref={calendarRef}>
+<div className="relative" ref={calendarRef}>
+  <button 
+    onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+    className="w-full flex items-center gap-2 bg-white px-3 py-2 rounded-md border border-gray-300 min-w-[180px] hover:border-blue-500 transition-all text-sm font-medium"
+  >
+    <Calendar size={16} className="text-gray-600" />
+    <span className="truncate text-gray-800">
+      {startDate ? `${format(new Date(startDate), "dd MMM")} - ${endDate ? format(new Date(endDate), "dd MMM") : '...'}` : 'Select Dates'}
+    </span>
+    <ChevronDown size={14} className={`ml-auto text-gray-500 transition-transform ${isCalendarOpen ? 'rotate-180' : ''}`} />
+  </button>
+
+  {isCalendarOpen && (
+    <div className="fixed inset-x-4 top-20 md:absolute md:inset-auto md:top-full md:right-0 mt-2 z-[999] bg-white border border-gray-200 shadow-xl rounded-md overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in duration-200 max-h-[85vh] overflow-y-auto md:max-h-none">
+
+      {/* Presets */}
+      <div className="w-full md:w-44 bg-gray-50 border-b md:border-b-0 md:border-r border-gray-200 p-3 space-y-1">
+        <p className="text-xs uppercase text-gray-400 font-semibold tracking-wider px-2 pb-2">
+          Quick Select
+        </p>
+
+        {quickOptions.map((opt) => (
           <button 
-            onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-            className="w-full flex items-center gap-3 bg-gray-50 dark:bg-black/40 px-4 py-3 rounded-sm border border-gray-200 dark:border-white/5 min-w-[180px] hover:border-primary-btn transition-all"
+            key={opt.label} 
+            onClick={() => { 
+              setStartDate(format(opt.get().s, "yyyy-MM-dd")); 
+              setEndDate(format(opt.get().e, "yyyy-MM-dd")); 
+              setIsCalendarOpen(false); 
+            }}
+            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md transition "
           >
-            <Calendar size={16} className="text-primary-btn" />
-            <span className="text-[10px] font-bold uppercase tracking-widest truncate">
-              {startDate ? `${format(new Date(startDate), "dd MMM")} - ${endDate ? format(new Date(endDate), "dd MMM") : '...'}` : 'Select Dates'}
-            </span>
-            <ChevronDown size={14} className={`ml-auto transition-transform ${isCalendarOpen ? 'rotate-180' : ''}`} />
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Calendar Section */}
+      <div className="flex flex-col">
+        <DualCalendar 
+          startDate={startDate} 
+          setStartDate={setStartDate} 
+          endDate={endDate} 
+          setEndDate={setEndDate} 
+        />
+
+        <div className="p-3 border-t border-gray-200 flex gap-2 justify-end bg-gray-50">
+          <button 
+            onClick={() => { setStartDate(""); setEndDate(""); setIsCalendarOpen(false); }} 
+            className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-md transition"
+          >
+            Cancel
           </button>
 
-          {isCalendarOpen && (
-            <div className="fixed inset-x-4 top-20 md:absolute md:inset-auto md:top-full md:right-0 mt-2 z-[999] bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 shadow-2xl rounded-sm overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in duration-200 max-h-[85vh] overflow-y-auto md:max-h-none">
-              {/* Presets */}
-              <div className="w-full md:w-40 bg-gray-50/50 dark:bg-white/[0.02] border-b md:border-b-0 md:border-r border-gray-100 dark:border-white/5 p-2 grid grid-cols-2 md:grid-cols-1 gap-1">
-                <p className="col-span-2 md:col-span-1 text-[8px] uppercase tracking-widest text-gray-400 p-2">Quick Select</p>
-                {quickOptions.map((opt) => (
-                  <button 
-                    key={opt.label} 
-                    onClick={() => { setStartDate(format(opt.get().s, "yyyy-MM-dd")); setEndDate(format(opt.get().e, "yyyy-MM-dd")); setIsCalendarOpen(false); }}
-                    className="w-full text-left px-3 py-2 text-[10px] font-bold uppercase hover:bg-primary-btn hover:text-white rounded-sm transition-colors"
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Calendar Section */}
-              <div className="flex flex-col">
-                <DualCalendar startDate={startDate} setStartDate={setStartDate} endDate={endDate} setEndDate={setEndDate} />
-                <div className="p-4 border-t border-gray-100 dark:border-white/5 flex gap-2 justify-end bg-gray-50/30">
-                  <button onClick={() => { setStartDate(""); setEndDate(""); setIsCalendarOpen(false); }} className="px-4 py-2 text-[10px] font-bold uppercase text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-sm">
-                    Clear
-                  </button>
-                  <button onClick={() => setIsCalendarOpen(false)} className="bg-primary-btn text-white px-6 py-2 rounded-sm text-[10px] font-bold uppercase tracking-widest">
-                    Apply
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          <button 
+            onClick={() => setIsCalendarOpen(false)} 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md text-sm font-medium transition"
+          >
+            Update
+          </button>
         </div>
+      </div>
+
+    </div>
+  )}
+</div>
+
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setFilterMode(filterMode === 'all' ? 'filtered' : 'all')}
-            className={`flex-1 px-4 py-3 rounded-sm border text-[10px] uppercase tracking-widest font-bold transition-all ${filterMode === 'filtered' ? 'bg-primary-btn/10 border-primary-btn text-primary-btn' : 'bg-gray-50 dark:bg-black/40 border-gray-200 dark:border-white/5 text-gray-600 dark:text-gray-300'}`}
+            className={`flex-1 px-4 py-3 rounded-sm border text-[11px] uppercase  font-bold transition-all ${filterMode === 'filtered' ? 'bg-primary-btn/10 border-primary-btn text-primary-btn' : 'bg-gray-50 dark:bg-black/40 border-gray-200 dark:border-white/5 text-gray-600 dark:text-gray-300'}`}
           >
             {filterMode === 'filtered' ? 'Verified' : 'All Leads'}
           </button>
           
           <button 
             onClick={exportToExcel} 
-            className="flex-1 bg-blue-600 hover:bg-blue-500 text-white px-5 py-3 rounded-sm text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+            className="flex-1 bg-primary-btn hover:bg-blue-500 text-white px-5 py-3 rounded-sm text-[11px] uppercase  flex items-center justify-center gap-2 transition-colors"
           >
             <Download size={14} /> <span>Export</span>
           </button>

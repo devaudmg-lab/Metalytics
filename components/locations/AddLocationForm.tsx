@@ -48,13 +48,13 @@ export default function AddLocationForm({ defaultCity = "", defaultZip = "", onS
         {/* City Input */}
         <div className="relative group">
           <div className="absolute left-5 top-1/2 -translate-y-1/2 p-1.5 bg-gray-100 dark:bg-zinc-900 rounded-lg group-focus-within:bg-emerald-500/10 transition-colors">
-            <MapPin className="text-gray-700 dark:text-zinc-600 group-focus-within:text-emerald-600 dark:group-focus-within:text-emerald-500 transition-colors" size={16} />
+            <MapPin className="text-gray-700 dark:text-zinc-600 group-focus-within:text-primary-btn dark:group-focus-within:text-emerald-500 transition-colors" size={16} />
           </div>
           <input 
             name="city" 
             defaultValue={defaultCity}
             placeholder="City Name (e.g. Melbourne)" 
-            className="w-full bg-gray-50 dark:bg-zinc-950/50 border border-gray-200 dark:border-white/5 rounded-[1.5rem] py-5 pl-16 pr-6 text-sm text-foreground outline-none focus:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/5 transition-all font-semibold placeholder:text-gray-700 dark:placeholder:text-zinc-700 shadow-inner" 
+            className="w-full bg-gray-50 dark:bg-zinc-950/50 border border-gray-200 dark:border-white/5 rounded-sm py-5 pl-16 pr-6 text-sm text-foreground outline-none focus:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/5 transition-all font-semibold placeholder:text-gray-700 dark:placeholder:text-zinc-700 shadow-inner" 
             required 
           />
         </div>
@@ -62,13 +62,13 @@ export default function AddLocationForm({ defaultCity = "", defaultZip = "", onS
         {/* Zip Code Input */}
         <div className="relative group">
           <div className="absolute left-5 top-1/2 -translate-y-1/2 p-1.5 bg-gray-100 dark:bg-zinc-900 rounded-lg group-focus-within:bg-emerald-500/10 transition-colors">
-            <Globe className="text-gray-700 dark:text-zinc-600 group-focus-within:text-emerald-600 dark:group-focus-within:text-emerald-500 transition-colors" size={16} />
+            <Globe className="text-gray-700 dark:text-zinc-600 group-focus-within:text-primary-btn dark:group-focus-within:text-emerald-500 transition-colors" size={16} />
           </div>
           <input 
             name="zip" 
             defaultValue={defaultZip}
             placeholder="Postal Code (e.g. 3000)" 
-            className="w-full bg-gray-50 dark:bg-zinc-950/50 border border-gray-200 dark:border-white/5 rounded-[1.5rem] py-5 pl-16 pr-6 text-sm text-foreground outline-none focus:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/5 transition-all font-mono placeholder:text-gray-700 dark:placeholder:text-zinc-700 tracking-wider shadow-inner font-bold" 
+            className="w-full bg-gray-50 dark:bg-zinc-950/50 border border-gray-200 dark:border-white/5 rounded-sm py-5 pl-16 pr-6 text-sm text-foreground outline-none focus:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/5 transition-all font-mono placeholder:text-gray-700 dark:placeholder:text-zinc-700  shadow-inner font-bold" 
             required 
           />
         </div>
@@ -77,7 +77,7 @@ export default function AddLocationForm({ defaultCity = "", defaultZip = "", onS
         <button 
           type="submit" 
           disabled={loading}
-          className="relative overflow-hidden cursor-pointer bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-200 dark:disabled:bg-zinc-800 text-white rounded-[1.5rem] uppercase tracking-[0.2em] text-[10px] transition-all active:scale-95 flex items-center justify-center gap-3 shadow-lg shadow-emerald-600/20 group h-[60px]"
+          className="relative overflow-hidden cursor-pointer bg-primary-btn disabled:bg-gray-200 dark:disabled:bg-zinc-800 text-white rounded-sm uppercase  text-sm transition-all active:scale-95 flex items-center justify-center gap-3 shadow-lg shadow-primtext-primary-btn/20 group h-[60px]"
         >
           {loading ? (
             <Loader2 className="animate-spin" size={18}/>

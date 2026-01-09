@@ -96,17 +96,17 @@ const displayData = useMemo(() => {
       <main className="flex-1 rounded-[1.5rem] md:rounded-sm border border-gray-200 dark:border-border-custom bg-card/50 dark:bg-card/20 backdrop-blur-md overflow-hidden min-h-[400px] shadow-sm">
         {/* Sub-Header info bar */}
         <div className="border-b border-gray-200 dark:border-border-custom bg-gray-50/50 dark:bg-white/5 flex flex-col sm:flex-row items-start sm:items-center px-6 md:px-8 py-4 justify-between gap-2">
-          <div className="flex items-center gap-2 text-gray-500 dark:text-zinc-500 font-bold text-[10px] md:text-lg uppercase tracking-widest">
-            <Layers size={14} className="text-primary-btn" />
-            <span className="text-foreground">{displayData.length}</span> Records Found
+          <div className="flex items-center gap-2 text-tx-black dark:text-zinc-500 font-bold text-[10px] md:text-[15px] ">
+            <Layers size={14}/>
+            <span>{displayData.length}</span> Records Found
           </div>
-          <div className="text-[10px] md:text-lg text-gray-700 dark:text-zinc-600 uppercase tracking-widest flex items-center gap-2">
+          <div className="text-[10px] md:text-[15px] text-tx-black dark:text-zinc-600 flex items-center gap-2 font-bold">
             View Mode: <span className="text-primary-btn bg-toggle dark:bg-primary-btn/10 px-2 py-0.5 rounded">{viewMode}</span>
           </div>
         </div>
         
         {/* View Switcher Container */}
-        <div className="p-2 md:p-6">
+        <div>
           <div className="animate-in fade-in duration-500">
             {viewMode === "whatsapp" && (
               <ViewWhatsApp
@@ -133,10 +133,10 @@ const displayData = useMemo(() => {
             <BarChart3 size={24} className="text-emerald-600 dark:text-emerald-500" />
           </div>
           <div>
-            <h2 className="text-2xl md:text-3xl  text-foreground tracking-tighter leading-tight">
+            <h2 className="text-2xl md:text-3xl  text-foreground er leading-tight">
               Market <span className="text-emerald-600 dark:text-emerald-500">Intelligence</span>
             </h2>
-            <p className="text-gray-500 dark:text-zinc-500 text-[10px] md:text-xs font-bold uppercase tracking-widest mt-1">
+            <p className="text-gray-500 dark:text-zinc-500 text-[10px] md:text-xs font-bold uppercase  mt-1">
                Visualizing real-time data trends
             </p>
           </div>

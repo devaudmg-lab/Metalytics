@@ -24,12 +24,12 @@ export default function ViewCards({ data }: any) {
             {/* Header: Name & Status */}
             <div className="flex justify-between items-start mb-6">
               <div className="space-y-1">
-                <h3 className=" text-foreground text-xl md:text-2xl tracking-tight group-hover:text-primary-btn transition-colors lowercase first-letter:uppercase">
+                <h3 className=" text-foreground text-xl md:text-2xl  group-hover:text-primary-btn transition-colors lowercase first-letter:uppercase">
                   {lead.full_name}
                 </h3>
                 <div className="flex items-center gap-2">
                    <div className={`w-2 h-2 rounded-full ${lead.is_filtered ? 'bg-primary-btn animate-pulse' : 'bg-red-500'}`} />
-                   <span className="text-[10px]  uppercase tracking-[0.2em] text-gray-700 dark:text-zinc-500">
+                   <span className="text-[10px]  uppercase  text-gray-700 dark:text-zinc-500">
                      {lead.is_filtered ? 'Verified Lead' : 'Outside Region'}
                    </span>
                 </div>
@@ -49,7 +49,7 @@ export default function ViewCards({ data }: any) {
                 <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center border border-gray-200 dark:border-white/5">
                   <Phone size={18} className="text-emerald-500/70" />
                 </div>
-                <span className="text-sm font-semibold tracking-wide">{lead.phone}</span>
+                <span className="text-sm font-semibold ">{lead.phone}</span>
               </div>
             </div>
 
@@ -64,7 +64,7 @@ export default function ViewCards({ data }: any) {
               
               <div className="flex items-center gap-2 text-gray-700 dark:text-zinc-600">
                 <Calendar size={14} />
-                <span className="text-[10px] font-bold uppercase tracking-widest">
+                <span className="text-[10px] font-bold uppercase ">
                   {new Date(lead.created_at).toLocaleDateString()}
                 </span>
               </div>

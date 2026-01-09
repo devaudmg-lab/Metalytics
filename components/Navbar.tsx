@@ -23,7 +23,7 @@ export default function Navbar() {
             <div className="w-9 h-9 md:w-10 md:h-10 bg-primary-btn rounded-xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-all">
               <Activity size={20} className="text-white" />
             </div>
-            <span className="text-lg md:text-xl font-bold tracking-tighter text-gray-900 dark:text-white">
+            <span className="text-lg md:text-xl font-bold er text-gray-900 dark:text-white">
               META<span className="text-primary-btn">LYTICS</span>
             </span>
           </Link>
@@ -110,7 +110,7 @@ function NavLink({ href, icon, label, active }: any) {
   return (
     <Link 
       href={href} 
-      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-bold uppercase tracking-wider transition-all ${
+      className={`flex items-center gap-2 px-4 py-2 text-[12px] rounded-[4px] font-bold uppercase  transition-all ${
         active 
         ? 'bg-primary-btn/10 text-primary-btn' 
         : 'text-gray-500 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5'
@@ -126,7 +126,7 @@ function MobileNavLink({ href, icon, label, active, onClick }: any) {
     <Link 
       href={href} 
       onClick={onClick}
-      className={`flex items-center gap-4 p-4 rounded-xl font-bold transition-all ${
+      className={`flex items-center gap-4 p-4 rounded-[4px] font-bold transition-all ${
         active 
         ? 'bg-primary-btn/10 text-primary-btn' 
         : 'text-black dark:text-gray-400 bg-gray-50 dark:bg-white/5'

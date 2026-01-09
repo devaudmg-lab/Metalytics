@@ -12,13 +12,13 @@ export default function HomePage() {
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-card dark:bg-white/5 border border-gray-200 dark:border-white/10 mb-6 md:mb-8 shadow-sm">
           <Zap size={12} className="text-primary-btn fill-primary-btn md:w-[14px]" />
-          <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-zinc-400">
+          <span className="text-[9px] md:text-[10px] font-bold uppercase  text-gray-500 dark:text-zinc-400">
             v1.0 Real-time Engine
           </span>
         </div>
 
         {/* Header Section */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl  mb-4 md:mb-6 tracking-tighter leading-[1.1] text-gray-900 dark:text-white">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl  mb-4 md:mb-6 er leading-[1.1] text-gray-900 dark:text-white">
           Manage Meta Leads <br className="hidden sm:block" />
           <span className="bg-gradient-to-r from-primary-btn to-emerald-500 bg-clip-text text-transparent">
             {" "}with Precision
@@ -39,7 +39,7 @@ export default function HomePage() {
               <div className="w-12 h-12 md:w-14 md:h-14 bg-toggle dark:bg-primary-btn/10 rounded-xl md:rounded-sm flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 group-hover:bg-primary-btn transition-all duration-500">
                 <BarChart3 className="w-6 h-6 md:w-7 md:h-7 text-primary-btn group-hover:text-white" />
               </div>
-              <h2 className="text-xl md:text-2xl  text-gray-900 dark:text-white mb-2 md:mb-3 tracking-tight flex items-center gap-2">
+              <h2 className="text-xl md:text-2xl  text-gray-900 dark:text-white mb-2 md:mb-3  flex items-center gap-2">
                 Leads Dashboard 
                 <ArrowRight size={18} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all hidden md:block text-primary-btn" />
               </h2>
@@ -55,7 +55,7 @@ export default function HomePage() {
               <div className="w-12 h-12 md:w-14 md:h-14 bg-emerald-500/10 rounded-xl md:rounded-sm flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 group-hover:bg-emerald-600 transition-all duration-500">
                 <MapPin className="w-6 h-6 md:w-7 md:h-7 text-emerald-500 group-hover:text-white" />
               </div>
-              <h2 className="text-xl md:text-2xl  text-gray-900 dark:text-white mb-2 md:mb-3 tracking-tight flex items-center gap-2">
+              <h2 className="text-xl md:text-2xl  text-gray-900 dark:text-white mb-2 md:mb-3  flex items-center gap-2">
                 Service Areas
                 <ArrowRight size={18} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all hidden md:block text-emerald-500" />
               </h2>
@@ -73,12 +73,12 @@ export default function HomePage() {
               <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
               <div className="w-2 h-2 bg-emerald-500 rounded-full absolute top-0 left-0 animate-ping"></div>
             </div>
-            <span className="text-[10px] md:text-[11px]  uppercase tracking-widest text-gray-700 dark:text-zinc-500">
+            <span className="text-[10px] md:text-[11px]  uppercase  text-gray-700 dark:text-zinc-500">
               System Online
             </span>
           </div>
           <div className="hidden sm:block h-4 w-[1px] bg-gray-200 dark:bg-white/10"></div>
-          <span className="text-[10px] md:text-[11px]  uppercase tracking-widest text-gray-700 dark:text-zinc-500">
+          <span className="text-[10px] md:text-[11px]  uppercase  text-gray-700 dark:text-zinc-500">
             End-to-End Encrypted
           </span>
         </div>

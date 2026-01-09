@@ -10,10 +10,10 @@ export default function ViewTable({ data }: any) {
           {/* Header */}
           <thead className="sticky top-0 z-20 bg-gray-50 dark:bg-[#111] border-b border-gray-200 dark:border-white/10 shadow-sm">
             <tr>
-              <th className="p-6 text-[10px] md:text-[11px]  text-gray-700 dark:text-zinc-500 uppercase tracking-[0.2em]">Lead Information</th>
-              <th className="p-6 text-[10px] md:text-[11px]  text-gray-700 dark:text-zinc-500 uppercase tracking-[0.2em]">Location Details</th>
-              <th className="p-6 text-[10px] md:text-[11px]  text-gray-700 dark:text-zinc-500 uppercase tracking-[0.2em]">Contact Method</th>
-              <th className="p-6 text-[10px] md:text-[11px]  text-gray-700 dark:text-zinc-500 uppercase tracking-[0.2em]">Status & Date</th>
+              <th className="p-6 text-[10px] md:text-[11px]  text-gray-700 dark:text-zinc-500 uppercase ">Lead Information</th>
+              <th className="p-6 text-[10px] md:text-[11px]  text-gray-700 dark:text-zinc-500 uppercase ">Location Details</th>
+              <th className="p-6 text-[10px] md:text-[11px]  text-gray-700 dark:text-zinc-500 uppercase ">Contact Method</th>
+              <th className="p-6 text-[10px] md:text-[11px]  text-gray-700 dark:text-zinc-500 uppercase ">Status & Date</th>
             </tr>
           </thead>
 
@@ -37,7 +37,7 @@ export default function ViewTable({ data }: any) {
                       <p className="text-foreground  text-base group-hover:text-primary-btn transition-colors lowercase first-letter:uppercase">
                         {lead.full_name}
                       </p>
-                      <p className="text-[10px] text-gray-700 dark:text-zinc-600 font-bold uppercase tracking-widest mt-0.5 font-mono">
+                      <p className="text-[10px] text-gray-700 dark:text-zinc-600 font-bold uppercase  mt-0.5 font-mono">
                         ID: {lead.id.slice(0, 8)}
                       </p>
                     </div>
@@ -50,7 +50,7 @@ export default function ViewTable({ data }: any) {
                     <MapPin size={16} className="text-gray-300 dark:text-zinc-600 group-hover:text-primary-btn transition-colors" />
                     <div>
                       <p className="text-sm font-bold text-gray-700 dark:text-zinc-200">{lead.city}</p>
-                      <p className="text-xs text-gray-700 dark:text-zinc-500 font-medium tracking-wide">{lead.postal_code}</p>
+                      <p className="text-xs text-gray-700 dark:text-zinc-500 font-medium ">{lead.postal_code}</p>
                     </div>
                   </div>
                 </td>
@@ -72,7 +72,7 @@ export default function ViewTable({ data }: any) {
                 {/* 4. Status Column */}
                 <td className="p-6">
                   <div className="flex flex-col gap-2">
-                    <div className={`flex items-center gap-2 w-fit px-3 py-1 rounded-full border text-[9px]  uppercase tracking-widest
+                    <div className={`flex items-center gap-2 w-fit px-3 py-1 rounded-full border text-[9px]  uppercase 
                       ${lead.is_filtered 
                         ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 border-emerald-500/20' 
                         : 'bg-red-500/10 text-red-600 dark:text-red-500 border-red-500/20'}`}>
