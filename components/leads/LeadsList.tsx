@@ -129,14 +129,14 @@ const displayData = useMemo(() => {
       {/* 3. Analytics Section */}
       <section className="bg-card border border-gray-200 dark:border-border-custom rounded-[1.5rem] md:rounded-sm p-6 md:p-10 mt-6 md:mt-12 shadow-sm transition-all">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8 md:mb-12">
-          <div className="p-3 bg-emerald-500/10 dark:bg-emerald-500/5 rounded-sm w-fit border border-emerald-500/20">
-            <BarChart3 size={24} className="text-emerald-600 dark:text-emerald-500" />
+          <div className="p-3 bg-prtext-primary-btn/10 dark:bg-prtext-primary-btn/5 rounded-sm w-fit border border-prtext-primary-btn/20">
+            <BarChart3 size={24} className="text-primary-btn dark:text-primary-btn" />
           </div>
           <div>
-            <h2 className="text-2xl md:text-3xl  text-foreground er leading-tight">
-              Market <span className="text-emerald-600 dark:text-emerald-500">Intelligence</span>
+            <h2 className=" text-tx-black dark:text-zinc-500 font-bold text-[10px] md:text-[15px]">
+              Market <span className="text-primary-btn dark:text-primary-btn">Intelligence</span>
             </h2>
-            <p className="text-gray-500 dark:text-zinc-500 text-[10px] md:text-xs font-bold uppercase  mt-1">
+            <p className="text-xs uppercase  text-gray-700 dark:text-zinc-600  mt-1">
                Visualizing real-time data trends
             </p>
           </div>
