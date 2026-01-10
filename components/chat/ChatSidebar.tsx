@@ -25,8 +25,8 @@ export default function ChatSidebar({
     const filteredLeads = useMemo(() => {
         return leads.filter((lead) => {
             if (activeTab === "messenger") return !!lead.messenger_psid;
-            // For WhatsApp, we currently check if they have a phone number (placeholder logic)
-            if (activeTab === "whatsapp") return !!lead.phone;
+            // For WhatsApp, only show if we have actual WhatsApp history (Placeholder: currently hidden to avoid confusion)
+            if (activeTab === "whatsapp") return false;
             return true;
         });
     }, [leads, activeTab]);
