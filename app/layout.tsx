@@ -5,7 +5,7 @@ import "./globals.css";
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="text-foreground antialiased min-h-screen transition-colors duration-300 ">
+      <body className="text-foreground antialiased min-h-screen transition-colors duration-300 " suppressHydrationWarning>
         <ThemeProvider>
           <Navbar />
           <main className="mx-auto lg:px-8 py-6">

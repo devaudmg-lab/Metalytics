@@ -2,15 +2,15 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 export const createClient = async () => {
-  const cookieStore = await cookies(); // Yahan 'await' zaroori hai
+  const cookieStore = await cookies(); 
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!, // Key ka naam check karein
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!, 
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll();
+          return cookieStore.getAll();    
         },
         setAll(cookiesToSet) {
           try {

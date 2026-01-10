@@ -186,7 +186,7 @@ export default function LeadAnalytics({ data }: { data: any[] }) {
                 <Tooltip cursor={{fill: 'rgba(0,0,0,0.02)'}} contentStyle={{backgroundColor: 'var(--card)', border: '1px solid var(--border-custom)', borderRadius: '15px'}} />
                 <Legend verticalAlign="top" align="right" wrapperStyle={{ paddingBottom: '20px', fontSize: '9px', textTransform: 'uppercase', fontWeight: '900' }} />
                 <Bar name="Verified" dataKey="verified" stackId="a" fill="#0a78be" barSize={35} radius={[4, 4, 0, 0]} />
-                <Bar name="Flagged" dataKey="outside" stackId="a" fill="#e2e8f0" className="dark:fill-zinc-800" barSize={35} radius={[10, 10, 0, 0]} />
+                <Bar name="Flagged" dataKey="outside" stackId="a" fill="#525252" className="dark:fill-zinc-800" barSize={35} radius={[10, 10, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
