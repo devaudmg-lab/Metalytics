@@ -79,8 +79,10 @@ export async function POST(req: NextRequest) {
 
         if (!existingLead) {
           // 2. Fetch User Profile from Graph API
+          // Use Page Access Token if available (preferred), else User Token
+          const graphToken = process.env.META_PAGE_ACCESS_TOKEN || process.env.META_ACCESS_TOKEN;
           const profileRes = await fetch(
-            `https://graph.facebook.com/v24.0/${senderPsid}?fields=first_name,last_name,profile_pic&access_token=${process.env.META_ACCESS_TOKEN}`
+            `https://graph.facebook.com/v24.0/${senderPsid}?fields=first_name,last_name,profile_pic&access_token=${graphToken}`
           );
           const profile = await profileRes.json();
           const fullName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim();

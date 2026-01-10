@@ -89,36 +89,41 @@ export default function ChatPage() {
         };
     }, [selectedLeadId]);
 
-    // Send Message Logic (For V1 - currently we don't have a Send API connected, simulating local echo or error)
+    // Send Message Logic
     const handleSendMessage = async (text: string) => {
         if (!selectedLead?.messenger_psid) {
             alert("Cannot reply. No Messenger PSID found.");
             return;
         }
 
-        // OPTIONAL: Call Next.js API to send reply via Graph API
-        // Since we didn't build the "Send API" yet in the plan, for now we will just log it locally
-        // to mimic the "sent" state.
-        // Ideally, you would have a `POST /api/chat/send` route.
+        try {
+            const response = await fetch("/api/chat/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    text,
+                    recipient_id: selectedLead.messenger_psid,
+                    lead_id: selectedLeadId
+                })
+            });
 
-        // Simulating local insert for demo purposes (In real app, backend sends to Meta, then inserts to DB)
-        const { error } = await supabase.from("lead_messages").insert([
-            {
-                lead_id: selectedLeadId,
-                sender: "page", // Sent by us
-                message_text: text
+            const data = await response.json();
+
+            if (!response.ok || data.error) {
+                console.error("Send Error:", data.error);
+                alert(`Failed to send: ${data.error}`);
+            } else {
+                // Success! The message will appear via Realtime subscription (or regular fetch)
+                // We don't need to manually insert into 'messages' state here if realtime is working.
+                // But for V1, we can optimistically append if needed.
+                // For now, let's rely on the DB subscription we already set up.
+                console.log("Message sent!", data);
             }
-        ]);
 
-        if (error) {
-            console.error(error);
-            alert("Failed to send message (db error)");
+        } catch (err: any) {
+            console.error("Network Error:", err);
+            alert("Failed to send message (Network error)");
         }
-
-        // NOTE: This does NOT actually send to Facebook yet unless we add that backend logic.
-        // The user asked for "Chat System" so "Send" is implied. 
-        // I should probably warn about this limitation or quick-fix it.
-        // For V1 text-only, I'll alert the user about the send limitation in the walkthrough.
     };
 
     return (
