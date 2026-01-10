@@ -143,9 +143,8 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
 
       {/* LEFT: SIDEBAR */}
       <aside
-        className={`${
-          isMobileDetailOpen ? "hidden" : "flex"
-        } lg:flex w-full lg:w-80 flex-col border-r border-gray-100 dark:border-white/5 bg-white dark:bg-[#080808]`}
+        className={`${isMobileDetailOpen ? "hidden" : "flex"
+          } lg:flex w-full lg:w-80 flex-col border-r border-gray-100 dark:border-white/5 bg-white dark:bg-[#080808]`}
       >
         <div className="p-4 md:p-6 space-y-4">
           <div className="flex items-center justify-between">
@@ -188,30 +187,27 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                   key={lead.id}
                   onClick={() => handleSelectLead(lead.id)}
                   className={`w-full text-left p-4 mb-2 border border-gray-300 rounded-sm transition-all duration-300 flex items-start gap-3 relative group cursor-pointer
-          ${
-            lead.is_filtered
-              ? "bg-white dark:bg-zinc-700/10"
-              : "bg-red-200/30 dark:bg-red-900/10 border-red-200/50"
-          }`}
+          ${lead.is_filtered
+                      ? "bg-white dark:bg-zinc-700/10"
+                      : "bg-red-200/30 dark:bg-red-900/10 border-red-200/50"
+                    }`}
                 >
                   <div className="flex-1 truncate">
                     <div className="flex justify-between items-start">
                       <p
-                        className={`md:text-lg text-sm font-semibold truncate ${
-                          selectedId === lead.id
+                        className={`md:text-lg text-sm font-semibold truncate ${selectedId === lead.id
                             ? "text-primary-btn dark:text-white"
                             : "text-black dark:text-zinc-400"
-                        }`}
+                          }`}
                       >
                         {lead.full_name || "New Prospect"}
                       </p>
                       <ArrowRight
                         size={12}
-                        className={`text-primary-btn transition-all shrink-0 ${
-                          selectedId === lead.id
+                        className={`text-primary-btn transition-all shrink-0 ${selectedId === lead.id
                             ? "opacity-100 translate-x-0"
                             : "opacity-0 -translate-x-2"
-                        }`}
+                          }`}
                       />
                     </div>
 
@@ -251,9 +247,8 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
 
       {/* CENTER & RIGHT CONTENT */}
       <div
-        className={`${
-          isMobileDetailOpen ? "flex" : "hidden"
-        } lg:flex flex-1 flex-col lg:flex-row overflow-hidden dark:bg-[#080808]`}
+        className={`${isMobileDetailOpen ? "flex" : "hidden"
+          } lg:flex flex-1 flex-col lg:flex-row overflow-hidden dark:bg-[#080808]`}
       >
         {/* MAIN CHAT AREA */}
         <main className="flex-1 flex flex-col bg-white dark:bg-[#080808] relative overflow-y-auto transition-colors">
@@ -275,11 +270,10 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                       </h2>
                       <div className="flex gap-2">
                         <div
-                          className={`px-2 py-1 rounded-smd border text-[10px] uppercase  ${
-                            selectedLead.is_filtered
+                          className={`px-2 py-1 rounded-smd border text-[10px] uppercase  ${selectedLead.is_filtered
                               ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
                               : "bg-red-500/10 border-red-500/20 text-red-500"
-                          }`}
+                            }`}
                         >
                           {selectedLead.is_filtered ? "Verified" : "Flagged"}
                         </div>
@@ -317,6 +311,23 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                   className="w-full sm:w-auto flex items-center justify-center gap-3 bg-primary-btn text-white px-2 py-1 md:px-4 md:py-2 rounded-xl md:rounded-sm text-[10px] md:text-sm uppercase  hover:brightness-110 transition-all"
                 >
                   OPEN WHATSAPP <ExternalLink size={14} />
+                </button>
+
+                {/* MESSENGER BUTTON */}
+                <button
+                  onClick={() =>
+                    selectedLead.messenger_psid
+                      ? window.open(`https://www.facebook.com/messages/t/${selectedLead.messenger_psid}`, "_blank")
+                      : alert("No Messenger ID available for this lead.")
+                  }
+                  title={selectedLead.messenger_psid ? "Open Messenger Chat" : "No Messenger ID"}
+                  disabled={!selectedLead.messenger_psid}
+                  className={`w-full sm:w-auto flex items-center justify-center gap-3 px-2 py-1 md:px-4 md:py-2 rounded-xl md:rounded-sm text-[10px] md:text-sm uppercase transition-all ${selectedLead.messenger_psid
+                      ? "bg-blue-600 text-white hover:brightness-110 cursor-pointer"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-zinc-800 dark:text-zinc-600"
+                    }`}
+                >
+                  MESSENGER <MessageSquare size={14} />
                 </button>
               </header>
 
@@ -407,7 +418,7 @@ function IntelligenceContent({ selectedLead, getRawData, onRefresh }: any) {
       alert("Failed to update postal code");
     } else {
       setIsEditingZip(false);
-      selectedLead.postal_code = editedZip; 
+      selectedLead.postal_code = editedZip;
       if (onRefresh) onRefresh();
     }
     setIsUpdating(false);

@@ -60,9 +60,96 @@ export async function POST(req: NextRequest) {
     const body = JSON.parse(rawBody);
     const supabase = await createClient();
 
-    // Step 2: Check if this is a lead generation event
+
+    // Step 2.1: Check for MESSAGING event (Facebook Messenger)
+    const messagingEvent = body.entry?.[0]?.messaging?.[0];
+    if (messagingEvent) {
+      const senderPsid = messagingEvent.sender.id;
+      const messageText = messagingEvent.message?.text;
+
+      if (messageText) {
+        // 1. Check if lead exists by PSID
+        const { data: existingLead } = await supabase
+          .from("leads")
+          .select("*")
+          .eq("messenger_psid", senderPsid)
+          .single();
+
+        let leadId = existingLead?.id;
+
+        if (!existingLead) {
+          // 2. Fetch User Profile from Graph API
+          const profileRes = await fetch(
+            `https://graph.facebook.com/v24.0/${senderPsid}?fields=first_name,last_name,profile_pic&access_token=${process.env.META_ACCESS_TOKEN}`
+          );
+          const profile = await profileRes.json();
+          const fullName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
+
+          // 2.5 Fuzzy Match / Deduplication Check (15 mins window)
+          // We look for a lead created recently with the same name to assume it's the same person
+          const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+
+          const { data: recentLead } = await supabase
+            .from("leads")
+            .select("*")
+            .eq("full_name", fullName) // Exact name match for safe linking
+            .gt("created_at", fifteenMinutesAgo)
+            .single();
+
+          if (recentLead) {
+            // Found a match! Link this PSID to the existing lead
+            console.log(`Linking PSID ${senderPsid} to existing lead ${recentLead.id}`);
+            const { error: updateError } = await supabase
+              .from("leads")
+              .update({ messenger_psid: senderPsid })
+              .eq("id", recentLead.id);
+
+            if (!updateError) {
+              leadId = recentLead.id;
+            }
+          }
+
+          // If still no leadId, create a NEW lead
+          if (!leadId) {
+            // 3. Create New Lead
+            const { data: newLead, error: createError } = await supabase
+              .from("leads")
+              .insert([
+                {
+                  full_name: fullName || "Messenger User",
+                  messenger_psid: senderPsid,
+                  raw_data: { source: "messenger", profile },
+                },
+              ])
+              .select()
+              .single();
+
+            if (createError) throw createError;
+            leadId = newLead.id;
+          }
+        }
+
+        // 4. Log the message (Optional - if table exists)
+        // We catch error here to avoid failing if table doesn't exist yet
+        try {
+          await supabase.from("lead_messages").insert([
+            {
+              lead_id: leadId,
+              sender: "user",
+              message_text: messageText,
+            }
+          ]);
+        } catch (msgErr) {
+          console.warn("Could not save message history", msgErr);
+        }
+      }
+
+      return NextResponse.json({ success: true });
+    }
+
+    // Step 2.2: Check if this is a lead generation event
     const leadgenId = body.entry?.[0]?.changes?.[0]?.value?.leadgen_id;
-    
+
     if (!leadgenId) {
       // Return 200 to acknowledge other types of Meta notifications 
       // even if we aren't processing them.
@@ -74,7 +161,7 @@ export async function POST(req: NextRequest) {
     const metaResponse = await fetch(
       `https://graph.facebook.com/v24.0/${leadgenId}?fields=field_data,created_time&access_token=${process.env.META_ACCESS_TOKEN}`
     );
-    
+
     const leadDetails = await metaResponse.json();
 
     if (leadDetails.error) {
@@ -90,7 +177,7 @@ export async function POST(req: NextRequest) {
       return field?.values?.[0] || "";
     };
 
-const newLead = {
+    const newLead = {
       meta_lead_id: leadgenId,
       full_name: findField(["full_name", "name"]),
       email: findField(["email"]),
@@ -116,7 +203,7 @@ const newLead = {
 
   } catch (err: any) {
     console.error("Webhook processing error:", err.message);
-    
+
     /** * IMPORTANT: Return a 200 even on processing errors if you want Meta 
      * to stop retrying. If you want Meta to try again later, return a 500.
      */

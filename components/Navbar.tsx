@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, MapPinned, Activity, Menu, X, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, MapPinned, Activity, Menu, X, Sun, Moon, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
-import { useTheme } from '@/context/ThemeContext'; 
+import { useTheme } from '@/context/ThemeContext';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -16,7 +16,7 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-border-custom bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 md:h-20 flex items-center justify-between">
-        
+
         {/* Logo Section */}
         <div className="flex items-center gap-4 md:gap-8">
           <Link href="/" className="flex items-center gap-2 md:gap-3 group">
@@ -30,17 +30,23 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-1">
-            <NavLink 
-              href="/leads" 
-              icon={<LayoutDashboard size={16} />} 
-              label="Dashboard" 
-              active={isActive('/leads')} 
+            <NavLink
+              href="/leads"
+              icon={<LayoutDashboard size={16} />}
+              label="Dashboard"
+              active={isActive('/leads')}
             />
-            <NavLink 
-              href="/locations" 
-              icon={<MapPinned size={16} />} 
-              label="Locations" 
-              active={isActive('/locations')} 
+            <NavLink
+              href="/locations"
+              icon={<MapPinned size={16} />}
+              label="Locations"
+              active={isActive('/locations')}
+            />
+            <NavLink
+              href="/chat"
+              icon={<MessageSquare size={16} />}
+              label="Inbox"
+              active={isActive('/chat')}
             />
           </div>
         </div>
@@ -73,7 +79,7 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Toggle */}
-          <button 
+          <button
             className="md:hidden p-2 text-black dark:text-gray-300"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
@@ -85,18 +91,18 @@ export default function Navbar() {
       {/* Mobile Menu Dropdown */}
       {isMenuOpen && (
         <div className="md:hidden bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-border-custom px-4 py-6 flex flex-col gap-3 animate-in slide-in-from-top duration-300">
-          <MobileNavLink 
-            href="/leads" 
-            icon={<LayoutDashboard size={20} />} 
-            label="Dashboard" 
-            active={isActive('/leads')} 
+          <MobileNavLink
+            href="/leads"
+            icon={<LayoutDashboard size={20} />}
+            label="Dashboard"
+            active={isActive('/leads')}
             onClick={() => setIsMenuOpen(false)}
           />
-          <MobileNavLink 
-            href="/locations" 
-            icon={<MapPinned size={20} />} 
-            label="Locations" 
-            active={isActive('/locations')} 
+          <MobileNavLink
+            href="/locations"
+            icon={<MapPinned size={20} />}
+            label="Locations"
+            active={isActive('/locations')}
             onClick={() => setIsMenuOpen(false)}
           />
         </div>
@@ -108,13 +114,12 @@ export default function Navbar() {
 // Reusable NavLink components remain same...
 function NavLink({ href, icon, label, active }: any) {
   return (
-    <Link 
-      href={href} 
-      className={`flex items-center gap-2 px-4 py-2 text-[12px] rounded-[4px] font-bold uppercase  transition-all ${
-        active 
-        ? 'bg-primary-btn/10 text-primary-btn' 
+    <Link
+      href={href}
+      className={`flex items-center gap-2 px-4 py-2 text-[12px] rounded-[4px] font-bold uppercase  transition-all ${active
+        ? 'bg-primary-btn/10 text-primary-btn'
         : 'text-gray-500 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5'
-      }`}
+        }`}
     >
       {icon} {label}
     </Link>
@@ -123,14 +128,13 @@ function NavLink({ href, icon, label, active }: any) {
 
 function MobileNavLink({ href, icon, label, active, onClick }: any) {
   return (
-    <Link 
-      href={href} 
+    <Link
+      href={href}
       onClick={onClick}
-      className={`flex items-center gap-4 p-4 rounded-[4px] font-bold transition-all ${
-        active 
-        ? 'bg-primary-btn/10 text-primary-btn' 
+      className={`flex items-center gap-4 p-4 rounded-[4px] font-bold transition-all ${active
+        ? 'bg-primary-btn/10 text-primary-btn'
         : 'text-black dark:text-gray-400 bg-gray-50 dark:bg-white/5'
-      }`}
+        }`}
     >
       {icon} {label}
     </Link>
