@@ -27,31 +27,45 @@ export default function LeadsList({ initialLeads }: { initialLeads: any[] }) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "leads" },
-        (payload) => {
-          if (payload.eventType === "INSERT")
-            setLeads((prev) => [payload.new, ...prev]);
-          if (payload.eventType === "UPDATE")
+        async (payload) => {
+          if (payload.eventType === "INSERT") {
+            // Nayi lead aane par humein uski meta_identities bhi chahiye hogi
+            // Isliye hum naye lead ko firse fetch karte hain detail ke sath
+            const { data: newLead } = await supabase
+              .from("leads")
+              .select("*, meta_identities(*)")
+              .eq("id", payload.new.id)
+              .single();
+            
+            if (newLead) setLeads((prev) => [newLead, ...prev]);
+          }
+          if (payload.eventType === "UPDATE") {
             setLeads((prev) =>
-              prev.map((l) => (l.id === payload.new.id ? payload.new : l))
+              prev.map((l) => (l.id === payload.new.id ? { ...l, ...payload.new } : l))
             );
+          }
         }
       )
       .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
     };
   }, [supabase]);
 
-const displayData = useMemo(() => {
+  const displayData = useMemo(() => {
     return leads.filter((lead) => {
       const matchesMode = filterMode === "all" ? true : lead.is_filtered;
       const searchLower = searchQuery.toLowerCase();
+      
+      // Search logic for name, email, phone or city
       const matchesSearch =
         lead.full_name?.toLowerCase().includes(searchLower) ||
-        lead.postal_code?.includes(searchQuery) ||
+        lead.email?.toLowerCase().includes(searchLower) ||
+        lead.phone?.includes(searchQuery) ||
         lead.city?.toLowerCase().includes(searchLower);
       
-      // FIX: UTC ki jagah Local Date extract karein (YYYY-MM-DD format mein)
+      // Date Filter logic
       const d = new Date(lead.created_at);
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -75,7 +89,6 @@ const displayData = useMemo(() => {
   return (
     <div className="flex flex-col min-h-screen space-y-4 md:space-y-8 pb-10 md:pb-20 transition-colors duration-300">
       
-      {/* 1. Control Hub - Responsive Sticky */}
       <section className="sticky top-0 z-40 w-full animate-in fade-in slide-in-from-top-4 duration-500">
         <ControlBar
           viewMode={viewMode}
@@ -92,9 +105,7 @@ const displayData = useMemo(() => {
         />
       </section>
 
-      {/* 2. Main Display Area */}
       <main className="flex-1 rounded-[1.5rem] md:rounded-sm border border-gray-200 dark:border-border-custom bg-card/50 dark:bg-card/20 backdrop-blur-md overflow-hidden min-h-[400px] shadow-sm">
-        {/* Sub-Header info bar */}
         <div className="border-b border-gray-200 dark:border-border-custom bg-gray-50/50 dark:bg-white/5 flex flex-col sm:flex-row items-start sm:items-center px-6 md:px-8 py-4 justify-between gap-2">
           <div className="flex items-center gap-2 text-tx-black dark:text-zinc-500 font-bold text-[10px] md:text-[15px] ">
             <Layers size={14}/>
@@ -105,7 +116,6 @@ const displayData = useMemo(() => {
           </div>
         </div>
         
-        {/* View Switcher Container */}
         <div>
           <div className="animate-in fade-in duration-500">
             {viewMode === "whatsapp" && (
@@ -113,7 +123,6 @@ const displayData = useMemo(() => {
                 data={displayData}
                 onSave={handleSaveNote}
                 savingId={savingId}
-                filterMode={filterMode}
               />
             )}
             {viewMode === "card" && <ViewCards data={displayData} />}
@@ -126,7 +135,6 @@ const displayData = useMemo(() => {
         </div>
       </main>
 
-      {/* 3. Analytics Section */}
       <section className="bg-card border border-gray-200 dark:border-border-custom rounded-[1.5rem] md:rounded-sm p-6 md:p-10 mt-6 md:mt-12 shadow-sm transition-all">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8 md:mb-12">
           <div className="p-3 bg-prtext-primary-btn/10 dark:bg-prtext-primary-btn/5 rounded-sm w-fit border border-prtext-primary-btn/20">
@@ -136,7 +144,7 @@ const displayData = useMemo(() => {
             <h2 className=" text-tx-black dark:text-zinc-500 font-bold text-[10px] md:text-[15px]">
               Market <span className="text-primary-btn dark:text-primary-btn">Intelligence</span>
             </h2>
-            <p className="text-xs uppercase  text-gray-700 dark:text-zinc-600  mt-1">
+            <p className="text-xs uppercase text-gray-700 dark:text-zinc-600 mt-1">
                Visualizing real-time data trends
             </p>
           </div>

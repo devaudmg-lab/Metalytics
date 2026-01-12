@@ -2,22 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createHmac, timingSafeEqual } from "crypto";
 
-/**
- * Verify request signature from Meta
- */
+// --- 1. Security Verification ---
 function verifySignature(payload: string, signature: string | null) {
   if (!signature) return false;
-
   const appSecret = process.env.META_APP_SECRET;
   if (!appSecret) return false;
 
-  const [, sig] = signature.split("=");
+  const [algo, sig] = signature.split("=");
   const hmac = createHmac("sha256", appSecret);
   const digest = hmac.update(payload).digest("hex");
-
-  return timingSafeEqual(Buffer.from(sig), Buffer.from(digest));
+  return timingSafeEqual(Buffer.from(sig, "utf8"), Buffer.from(digest, "utf8"));
 }
 
+// --- 2. GET Handler (Verification Handshake) ---
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   if (
@@ -26,10 +23,10 @@ export async function GET(req: NextRequest) {
   ) {
     return new NextResponse(searchParams.get("hub.challenge"), { status: 200 });
   }
-
   return new NextResponse("Forbidden", { status: 403 });
 }
 
+// --- 3. POST Handler (Main Logic) ---
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
   const signature = req.headers.get("x-hub-signature-256");
@@ -40,95 +37,128 @@ export async function POST(req: NextRequest) {
 
   const body = JSON.parse(rawBody);
   const supabase = await createClient();
-
-  console.log(body);
-  
+  const entry = body.entry?.[0];
 
   try {
-    const messagingEvent = body.entry?.[0]?.messaging?.[0];
+    // --- PART A: MESSENGER LOGIC ---
+    if (entry?.messaging?.[0]) {
+      const event = entry.messaging[0];
+      const psid = event.sender?.id;
+      const messageText = event.message?.text;
 
-     console.log(messagingEvent);
-
-    if (
-      messagingEvent &&
-      messagingEvent.sender?.id &&
-      messagingEvent.message &&
-      !messagingEvent.message.is_echo
-    ) {
-      const senderPsid = messagingEvent.sender.id;
-
-      // Ensure numeric PSID
-      if (!/^\d+$/.test(senderPsid)) {
-        console.warn("Skipping invalid sender id:", senderPsid);
-        return NextResponse.json({ skipped: true });
+      // Ignore echoes (messages sent by the page itself)
+      if (event.message?.is_echo || !psid) {
+        return NextResponse.json({ success: true, skip: "echo_or_no_id" });
       }
 
-      const messageText = messagingEvent.message.text || "";
-      const graphToken = process.env.META_PAGE_ACCESS_TOKEN;
-
-      if (!graphToken) {
-        throw new Error("Missing META_PAGE_ACCESS_TOKEN");
-      }
-
-      // Check existing lead
-      const { data: existingLead } = await supabase
-        .from("leads")
-        .select("*")
-        .eq("messenger_psid", senderPsid)
+      // Check if PSID already exists in meta_identities
+      const { data: identity } = await supabase
+        .from("meta_identities")
+        .select("lead_id")
+        .eq("messenger_psid", psid)
         .maybeSingle();
 
-      let leadId = existingLead?.id;
-      let profile: any = {};
-      let fullName = "Messenger User";
+      let leadId = identity?.lead_id;
 
-      if (!existingLead) {
-        try {
-          const profileRes = await fetch(
-            `https://graph.facebook.com/v24.0/${senderPsid}?fields=first_name,last_name,profile_pic&access_token=${graphToken}`
-          );
-          const profileJson = await profileRes.json();
+      if (!leadId) {
+        // Naya Messenger User: Fetch details from Meta Graph API
+        const token = process.env.META_PAGE_ACCESS_TOKEN;
+        const res = await fetch(`https://graph.facebook.com/v24.0/${psid}?fields=first_name,last_name,profile_pic&access_token=${token}`);
+        const profile = await res.json();
+        
+        const fullName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Messenger User";
 
-          if (!profileJson.error) {
-            profile = profileJson;
-            fullName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
-          }
-        } catch (e) {
-          console.error("Profile fetch failed:", e);
-        }
-
-        const { data: newLead, error } = await supabase
+        // Step 1: Insert into leads (Database Trigger automatic check karega postal_code)
+        const { data: newLead, error: lErr } = await supabase
           .from("leads")
-          .insert([
-            {
-              full_name: fullName,
-              messenger_psid: senderPsid,
-              raw_data: { source: "messenger", profile }
-            }
-          ])
-          .select()
+          .insert([{ full_name: fullName, source: "messenger" }])
+          .select("id")
           .single();
 
-        if (error) throw error;
+        if (lErr) throw lErr;
         leadId = newLead.id;
-      }
 
-      if (messageText) {
-        await supabase.from("lead_messages").insert([
-          {
+        // Step 2: Create entry in meta_identities
+        const { error: iErr } = await supabase
+          .from("meta_identities")
+          .insert([{
             lead_id: leadId,
-            sender: "user",
-            message_text: messageText
-          }
-        ]);
+            messenger_psid: psid,
+            raw_metadata: profile
+          }]);
+        
+        if (iErr) throw iErr;
       }
 
-      return NextResponse.json({ success: true });
+      // Step 3: Log Message in lead_messages
+      if (messageText) {
+        await supabase.from("lead_messages").insert([{
+          lead_id: leadId,
+          sender: "user",
+          message_text: messageText
+        }]);
+      }
     }
 
-    return NextResponse.json({ ignored: true });
+    // --- PART B: META LEAD ADS (FORM) LOGIC ---
+    else if (entry?.changes?.[0]?.value?.leadgen_id) {
+      const leadgenId = entry.changes[0].value.leadgen_id;
+
+      // Check if this lead was already processed
+      const { data: existingIdentity } = await supabase
+        .from("meta_identities")
+        .select("lead_id")
+        .eq("meta_lead_id", leadgenId)
+        .maybeSingle();
+
+      if (!existingIdentity) {
+        // Fetch Lead Details using leadgen_id
+        const token = process.env.META_PAGE_ACCESS_TOKEN;
+        const res = await fetch(`https://graph.facebook.com/v24.0/${leadgenId}?access_token=${token}`);
+        const leadDetails = await res.json();
+
+        if (leadDetails.error) throw new Error(leadDetails.error.message);
+
+        // Map form fields (adjust names based on your Facebook Form setup)
+        const findField = (names: string[]) => 
+          leadDetails.field_data?.find((f: any) => names.includes(f.name.toLowerCase()))?.values?.[0] || "";
+
+        const leadPayload = {
+          full_name: findField(["full_name", "name", "first_name"]),
+          email: findField(["email"]),
+          phone: findField(["phone_number", "phone"]),
+          city: findField(["city"]),
+          postal_code: findField(["post_code", "postal_code", "zip"]),
+          source: "meta_ad" // Set source automatically
+        };
+
+        // Step 1: Insert into leads
+        const { data: lead, error: lErr } = await supabase
+          .from("leads")
+          .insert([leadPayload])
+          .select("id")
+          .single();
+
+        if (lErr) throw lErr;
+
+        // Step 2: Insert into meta_identities
+        const { error: iErr } = await supabase
+          .from("meta_identities")
+          .insert([{
+            lead_id: lead.id,
+            meta_lead_id: leadgenId,
+            raw_metadata: leadDetails
+          }]);
+        
+        if (iErr) throw iErr;
+      }
+    }
+
+    return NextResponse.json({ success: true });
 
   } catch (err: any) {
-    console.error("Webhook error:", err);
+    console.error("Webhook Error:", err.message);
+    // Return 200 to Meta even on error so they don't keep retrying if it's a code issue
     return NextResponse.json({ error: err.message }, { status: 200 });
   }
 }
