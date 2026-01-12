@@ -47,6 +47,8 @@ export async function POST(req: NextRequest) {
   try {
     const messagingEvent = body.entry?.[0]?.messaging?.[0];
 
+     console.log(messagingEvent);
+
     if (
       messagingEvent &&
       messagingEvent.sender?.id &&
