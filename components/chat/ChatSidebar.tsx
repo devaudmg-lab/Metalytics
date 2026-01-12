@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { MessageSquare, Phone, User, Search } from "lucide-react";
+import { useMemo, useState } from "react"; // 1. Added useState
+import { MessageSquare, Phone, User, Search, X } from "lucide-react"; // Added X for clearing
 import { formatDistanceToNow } from "date-fns";
 
 export type ChatTab = "all" | "messenger" | "whatsapp";
@@ -21,16 +21,26 @@ export default function ChatSidebar({
     activeTab,
     onTabChange,
 }: ChatSidebarProps) {
+    // 🎯 State for Search
+    const [searchQuery, setSearchQuery] = useState("");
 
-    // 🎯 Filtering Logic: Based on lead.source
+    // 🎯 Filtering Logic: Based on lead.source AND searchQuery
     const filteredLeads = useMemo(() => {
         return leads.filter((lead) => {
-            if (activeTab === "all") return true;
-            if (activeTab === "messenger") return lead.source === "messenger";
-            if (activeTab === "whatsapp") return lead.source === "whatsapp";
-            return true;
+            // Tab filtering
+            const matchesTab = 
+                activeTab === "all" || 
+                (activeTab === "messenger" && lead.source === "messenger") ||
+                (activeTab === "whatsapp" && lead.source === "whatsapp");
+
+            // Search filtering (matches name or source)
+            const matchesSearch = 
+                lead.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                lead.source?.toLowerCase().includes(searchQuery.toLowerCase());
+
+            return matchesTab && matchesSearch;
         });
-    }, [leads, activeTab]);
+    }, [leads, activeTab, searchQuery]);
 
     return (
         <div className="w-full flex flex-col h-full bg-white dark:bg-[#080808]">
@@ -38,7 +48,25 @@ export default function ChatSidebar({
             <div className="p-4 border-b border-gray-100 dark:border-white/5">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white">Inbox</h2>
-                    <Search size={20} className="text-gray-400 cursor-pointer" />
+                    
+                    {/* Search Input UI */}
+                    <div className="relative flex-1 ml-4">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input 
+                            type="text"
+                            placeholder="Search leads..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-gray-100 dark:bg-zinc-900/50 border-none rounded-full py-1.5 pl-9 pr-8 text-sm focus:ring-1 focus:ring-blue-500 outline-none text-gray-900 dark:text-white"
+                        />
+                        {searchQuery && (
+                            <X 
+                                size={14} 
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-600" 
+                                onClick={() => setSearchQuery("")}
+                            />
+                        )}
+                    </div>
                 </div>
 
                 {/* WhatsApp Style Tabs */}
@@ -68,9 +96,11 @@ export default function ChatSidebar({
                 {filteredLeads.length === 0 ? (
                     <div className="p-10 text-center flex flex-col items-center">
                         <div className="w-12 h-12 bg-gray-50 dark:bg-zinc-900 rounded-full flex items-center justify-center mb-3">
-                            <MessageSquare size={20} className="text-gray-300" />
+                            <Search size={20} className="text-gray-300" />
                         </div>
-                        <p className="text-sm text-gray-400 italic">No {activeTab} conversations</p>
+                        <p className="text-sm text-gray-400 italic">
+                            {searchQuery ? `No results for "${searchQuery}"` : `No ${activeTab} conversations`}
+                        </p>
                     </div>
                 ) : (
                     filteredLeads.map((lead) => {
@@ -95,7 +125,7 @@ export default function ChatSidebar({
                                 </div>
 
                                 {/* Content */}
-                                <div className="flex-1 min-w-0">
+                                <div className="flex-1 min-w-0 text-left">
                                     <div className="flex justify-between items-center mb-1">
                                         <h4 className={`text-[15px] truncate ${isSelected ? "font-bold text-blue-600" : "font-semibold text-gray-900 dark:text-gray-100"}`}>
                                             {lead.full_name || "New Prospect"}

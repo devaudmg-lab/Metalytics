@@ -105,6 +105,13 @@ export default function Navbar() {
             active={isActive('/locations')}
             onClick={() => setIsMenuOpen(false)}
           />
+          <MobileNavLink
+              href="/chat"
+              icon={<MessageSquare size={16} />}
+              label="Inbox"
+              active={isActive('/chat')}
+            onClick={() => setIsMenuOpen(false)}
+          />
         </div>
       )}
     </nav>

@@ -80,7 +80,7 @@ export default function ChatPage() {
 
     return (
         // Wrapper: Mobile par full screen (h-screen), Desktop par h-[calc...]
-        <div className="flex h-[calc(100vh-60px)] md:h-[calc(100vh-120px)] w-full border-gray-200 dark:border-white/5 md:rounded-sm overflow-hidden shadow-xl bg-white dark:bg-black">
+        <div className="flex h-[calc(100vh-80px)] md:h-[calc(100vh-120px)] w-full border-gray-200 dark:border-white/5 md:rounded-sm overflow-hidden shadow-xl bg-white dark:bg-black">
             
             {/* Sidebar View Control */}
             <div className={`${selectedLeadId ? 'hidden md:flex' : 'flex'} w-full md:w-[350px] lg:w-[400px] border-r border-gray-200 dark:border-white/5`}>
