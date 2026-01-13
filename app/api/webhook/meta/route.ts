@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createHmac, timingSafeEqual } from "crypto";
-import { console } from "inspector";
 
 // --- 1. Security Verification ---
 function verifySignature(payload: string, signature: string | null) {
@@ -39,25 +38,31 @@ export async function POST(req: NextRequest) {
 
   console.log("hello");
   
+  
   const body = JSON.parse(rawBody);
   const supabase = await createClient();
   const entry = body.entry?.[0];
 
   console.log(entry);
   
+  
 
   try {
     // --- PART A: MESSENGER LOGIC ---
     if (entry?.messaging?.[0]) {
       const event = entry.messaging[0];
+      
       console.log("This is the event =  "+event);
+      
       const messageText = event.message?.text;
       console.log("This is the message =  "+messageText);
+      
       
       const isEcho = event.message?.is_echo
       const psid = isEcho? event.recipient?.id : event.sender?.id;
 
-      console.log("isEcho = "+isEcho)
+      console.log("isEcho = "+isEcho);
+      
       
 
 
