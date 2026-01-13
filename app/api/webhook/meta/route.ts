@@ -36,21 +36,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
+
+  console.log("hello");
+  
   const body = JSON.parse(rawBody);
   const supabase = await createClient();
   const entry = body.entry?.[0];
+
+  console.log(entry);
+  
 
   try {
     // --- PART A: MESSENGER LOGIC ---
     if (entry?.messaging?.[0]) {
       const event = entry.messaging[0];
+      console.log("This is the event =  "+event);
       const messageText = event.message?.text;
+      console.log("This is the message =  "+messageText);
       
-      const isEcho = !!event.message?.is_echo
+      const isEcho = event.message?.is_echo
       const psid = isEcho? event.recipient?.id : event.sender?.id;
 
-      console.log("Thid is the message =  "+messageText);
-      console.log("Thid is the event =  "+entry);
       console.log("isEcho = "+isEcho)
       
 
