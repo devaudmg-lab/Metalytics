@@ -13,10 +13,11 @@ export default function ChatPage() {
     const [activeTab, setActiveTab] = useState<ChatTab>("all");
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
+    // 1. Fetch leads with both Messenger and WhatsApp identities
     const fetchLeads = useCallback(async () => {
         const { data } = await supabase
             .from("leads")
-            .select(`*, meta_identities ( messenger_psid )`)
+            .select(`*, meta_identities ( messenger_psid, whatsapp_number )`)
             .order("created_at", { ascending: false });
         if (data) setLeads(data);
     }, [supabase]);
@@ -32,9 +33,8 @@ export default function ChatPage() {
     const selectedLead = useMemo(() => {
         return leads.find((l) => l.id === selectedLeadId) || null;
     }, [leads, selectedLeadId]);
-    
-    const currentPsid = selectedLead?.meta_identities?.messenger_psid;
 
+    // 2. Fetch Messages (Realtime logic remains same as it's table-based)
     useEffect(() => {
         if (!selectedLeadId) {
             setMessages([]);
@@ -61,28 +61,52 @@ export default function ChatPage() {
         return () => { supabase.removeChannel(channel); };
     }, [selectedLeadId, supabase]);
 
+    // 3. Smart Send Message Handler (WhatsApp vs Messenger)
     const handleSendMessage = async (text: string) => {
-        const activePsid = selectedLead?.meta_identities?.messenger_psid;
-        if (!activePsid) {
-            alert("No Messenger ID found for this lead.");
+        if (!selectedLead) return;
+
+        const identity = selectedLead.meta_identities;
+        const source = selectedLead.source; // 'messenger', 'whatsapp', or 'meta_ad'
+
+        let endpoint = "/api/chat/send"; // Default Messenger API
+        let payload: any = { text, lead_id: selectedLeadId };
+
+        // Check if it's a WhatsApp lead
+        if (source === "whatsapp" || (!identity?.messenger_psid && identity?.whatsapp_number)) {
+            endpoint = "/api/chat/send-whatsapp";
+            payload.recipient_wa_id = identity?.whatsapp_number;
+            payload.recipient_id = identity?.whatsapp_number; // Backup for safety
+        } else {
+            // It's a Messenger/Meta Ad lead
+            if (!identity?.messenger_psid) {
+                alert("No Messenger PSID found for this lead.");
+                return;
+            }
+            payload.recipient_id = identity.messenger_psid;
+        }
+
+        if (!payload.recipient_id && !payload.recipient_wa_id) {
+            alert("Contact ID not found.");
             return;
         }
+
         try {
-            const response = await fetch("/api/chat/send", {
+            const response = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text, recipient_id: activePsid, lead_id: selectedLeadId })
+                body: JSON.stringify(payload)
             });
             const result = await response.json();
             if (!response.ok) alert(`Error: ${result.error}`);
-        } catch (err) { alert("Network error."); }
+        } catch (err) { 
+            alert("Network error. Please check your connection."); 
+        }
     };
 
     return (
-        // Wrapper: Mobile par full screen (h-screen), Desktop par h-[calc...]
         <div className="flex h-[calc(100vh-80px)] md:h-[calc(100vh-120px)] w-full border-gray-200 dark:border-white/5 md:rounded-sm overflow-hidden shadow-xl bg-white dark:bg-black">
             
-            {/* Sidebar View Control */}
+            {/* Sidebar */}
             <div className={`${selectedLeadId ? 'hidden md:flex' : 'flex'} w-full md:w-[350px] lg:w-[400px] border-r border-gray-200 dark:border-white/5`}>
                 <ChatSidebar
                     leads={leads}
@@ -93,15 +117,16 @@ export default function ChatPage() {
                 />
             </div>
 
-            {/* Chat Window View Control */}
+            {/* Chat Window */}
             <div className={`${selectedLeadId ? 'flex' : 'hidden md:flex'} flex-1`}>
                 <ChatWindow
                     lead={selectedLead}
                     messages={messages}
                     onSendMessage={handleSendMessage}
                     isLoading={isLoadingMessages}
-                    // Back logic pass ki hai
                     onBack={() => setSelectedLeadId(null)} 
+                    // Yahan aap source bhi pass kar sakte hain taaki UI mein icon dikhe
+                    platform={selectedLead?.source}
                 />
             </div>
         </div>

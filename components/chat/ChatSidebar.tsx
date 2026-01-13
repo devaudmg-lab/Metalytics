@@ -87,6 +87,7 @@ export default function ChatSidebar({
                         onClick={() => onTabChange("whatsapp")}
                         label="WhatsApp"
                         icon={<Phone size={14} />}
+                        isWhatsApp={true}
                     />
                 </div>
             </div>
@@ -105,29 +106,37 @@ export default function ChatSidebar({
                 ) : (
                     filteredLeads.map((lead) => {
                         const isSelected = selectedLeadId === lead.id;
+                        const isWhatsApp = lead.source === 'whatsapp';
+                        const isMetaAd = lead.source === 'meta_ad';
+
                         return (
                             <button
                                 key={lead.id}
                                 onClick={() => onSelectLead(lead.id)}
                                 className={`w-full p-4 flex items-center gap-3 border-b border-gray-100 dark:border-white/5 transition-all outline-none ${
                                     isSelected 
-                                    ? "bg-blue-50 dark:bg-blue-900/10 border-r-4 border-r-blue-600" 
+                                    ? isWhatsApp 
+                                        ? "bg-emerald-50 dark:bg-emerald-900/10 border-r-4 border-r-emerald-600" 
+                                        : "bg-blue-50 dark:bg-blue-900/10 border-r-4 border-r-blue-600"
                                     : "hover:bg-gray-50 dark:hover:bg-white/5"
                                 }`}
                             >
-                                {/* Avatar */}
+                                {/* Avatar with Source Based Colors */}
                                 <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-sm ${
-                                    lead.source === 'meta_ad' 
-                                    ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600" 
-                                    : "bg-blue-100 dark:bg-blue-900/30 text-blue-600"
+                                    isMetaAd ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600" :
+                                    isWhatsApp ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600" :
+                                    "bg-blue-100 dark:bg-blue-900/30 text-blue-600"
                                 }`}>
                                     <User size={22} />
                                 </div>
 
-                                {/* Content */}
                                 <div className="flex-1 min-w-0 text-left">
                                     <div className="flex justify-between items-center mb-1">
-                                        <h4 className={`text-[15px] truncate ${isSelected ? "font-bold text-blue-600" : "font-semibold text-gray-900 dark:text-gray-100"}`}>
+                                        <h4 className={`text-[15px] truncate ${
+                                            isSelected 
+                                            ? isWhatsApp ? "font-bold text-emerald-600" : "font-bold text-blue-600" 
+                                            : "font-semibold text-gray-900 dark:text-gray-100"
+                                        }`}>
                                             {lead.full_name || "New Prospect"}
                                         </h4>
                                         <span className="text-[10px] text-gray-400 font-medium">
@@ -136,13 +145,15 @@ export default function ChatSidebar({
                                     </div>
                                     
                                     <div className="flex items-center gap-1.5">
-                                        {lead.source === 'meta_ad' ? (
-                                            <span className="text-[8px] bg-orange-500 text-white px-1 py-0.5 rounded font-black tracking-tighter">AD</span>
+                                        {isMetaAd ? (
+                                            <span className="text-[8px] bg-orange-500 text-white px-1 py-0.5 rounded font-black tracking-tighter uppercase">AD</span>
+                                        ) : isWhatsApp ? (
+                                            <Phone size={12} className="text-emerald-500" />
                                         ) : (
                                             <MessageSquare size={12} className="text-blue-500" />
                                         )}
                                         <p className="text-[13px] text-gray-500 dark:text-gray-400 truncate">
-                                            {lead.source === 'meta_ad' ? "Meta Lead Form" : "Messenger Chat"}
+                                            {isMetaAd ? "Meta Lead Form" : isWhatsApp ? "WhatsApp Chat" : "Messenger Chat"}
                                         </p>
                                     </div>
                                 </div>
@@ -156,13 +167,15 @@ export default function ChatSidebar({
 }
 
 // Sub-component for Tabs
-function TabButton({ active, onClick, label, icon }: any) {
+function TabButton({ active, onClick, label, icon, isWhatsApp }: any) {
     return (
         <button
             onClick={onClick}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold uppercase rounded-md transition-all ${
+className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold uppercase rounded-md transition-all ${
                 active 
-                ? "bg-white dark:bg-zinc-800 text-blue-600 dark:text-white shadow-sm" 
+                ? isWhatsApp 
+                    ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm"
+                    : "bg-white dark:bg-zinc-800 text-blue-600 dark:text-white shadow-sm" 
                 : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-400"
             }`}
         >
