@@ -52,16 +52,16 @@ export async function POST(req: NextRequest) {
     if (entry?.messaging?.[0]) {
       const event = entry.messaging[0];
       
-      console.log("This is the event =  "+event);
+      console.log("Full Event Data:", JSON.stringify(event, null, 2));
       
       const messageText = event.message?.text;
-      console.log("This is the message =  "+messageText);
+      console.log("This is the message =  ",messageText);
       
       
       const isEcho = event.message?.is_echo
       const psid = isEcho? event.recipient?.id : event.sender?.id;
 
-      console.log("isEcho = "+isEcho);
+      console.log("isEcho = ",isEcho);
       
       
 
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
       if (messageText) {
         await supabase.from("lead_messages").insert([{
           lead_id: leadId,
-          sender: isEcho? "bot":"user",
+          sender: isEcho? "page":"user",
           message_text: messageText
         }]);
       }
