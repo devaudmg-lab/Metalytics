@@ -9,8 +9,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // WhatsApp ke liye ye do cheezein environment variables mein honi chahiye
-    const waToken = process.env.META_WHATSAPP_ACCESS_TOKEN;
+    // WhatsApp change env variables
+    const waToken = process.env.META_WHATSAPP_BUSINESS_ACCOUNT_ID;
     const phoneNumberId = process.env.META_WHATSAPP_PHONE_NUMBER_ID;
 
     if (!waToken || !phoneNumberId) {
