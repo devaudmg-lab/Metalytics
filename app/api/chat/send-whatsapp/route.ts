@@ -6,16 +6,22 @@ export async function POST(req: NextRequest) {
 
     // 1. Basic Validation
     if (!text || !recipient_wa_id || !lead_id) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
     // WhatsApp change env variables
-    const waToken = process.env.META_WHATSAPP_BUSINESS_ACCOUNT_ID;
+    const waToken = process.env.META_ACCESS_TOKEN;
     const phoneNumberId = process.env.META_WHATSAPP_PHONE_NUMBER_ID;
 
     if (!waToken || !phoneNumberId) {
       console.error("Missing WhatsApp Configuration");
-      return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
     }
 
     // 2. Send to WhatsApp Business Cloud API
@@ -25,7 +31,7 @@ export async function POST(req: NextRequest) {
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${waToken}`,
+          Authorization: `Bearer ${waToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -33,9 +39,9 @@ export async function POST(req: NextRequest) {
           recipient_type: "individual",
           to: recipient_wa_id, // User ka phone number (e.g., "919876543210")
           type: "text",
-          text: { 
+          text: {
             body: text,
-            preview_url: false // Agar message mein link hai toh preview dikhana hai ya nahi
+            preview_url: false, // Agar message mein link hai toh preview dikhana hai ya nahi
           },
         }),
       }
@@ -45,17 +51,19 @@ export async function POST(req: NextRequest) {
 
     if (fbData.error) {
       console.error("WhatsApp API Error:", fbData.error);
-      return NextResponse.json({ error: fbData.error.message }, { status: 400 });
+      return NextResponse.json(
+        { error: fbData.error.message },
+        { status: 400 }
+      );
     }
 
-    // Messenger ki tarah hi, hum yahan DB mein save nahi kar rahe 
+    // Messenger ki tarah hi, hum yahan DB mein save nahi kar rahe
     // kyunki Webhook 'Echo' isey handle kar lega (agar aapne WhatsApp webhooks subscribe kiye hain).
-    
-    return NextResponse.json({ 
-      success: true, 
-      wa_message_id: fbData.messages?.[0]?.id 
-    });
 
+    return NextResponse.json({
+      success: true,
+      wa_message_id: fbData.messages?.[0]?.id,
+    });
   } catch (err: any) {
     console.error("WhatsApp Send API Error:", err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
