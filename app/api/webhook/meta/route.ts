@@ -6,19 +6,22 @@ import { createHmac, timingSafeEqual } from "crypto";
 function verifySignature(payload: string, signature: string | null) {
   if (!signature) return false;
   const appSecret = process.env.META_APP_SECRET;
-  if (!appSecret) return false;
 
   const [algo, sig] = signature.split("=");
-  // Create HMAC using the raw string payload
-  const hmac = createHmac("sha256", appSecret);
-  const digest = hmac.update(payload, "utf8").digest("hex"); // Explicitly use utf8
+  const hmac = createHmac("sha256", appSecret!);
+  const digest = hmac.update(payload, "utf8").digest("hex");
 
-  // Don't use Buffer.from(sig, "utf8") because 'sig' is hex
-  return timingSafeEqual(
-    Buffer.from(sig, "hex"), 
-    Buffer.from(digest, "hex")
-  );
+  // --- YE LOGS BOHT ZAROORI HAIN ---
+  console.log("DEBUG: Full Payload Sample:", payload.substring(0, 50));
+  console.log("DEBUG: Received Sig from Meta:", sig);
+  console.log("DEBUG: Expected Sig (Calculated):", digest);
+  console.log("DEBUG: App Secret (First 3):", appSecret?.substring(0, 3));
+  // ---------------------------------
+
+  return timingSafeEqual(Buffer.from(sig, "hex"), Buffer.from(digest, "hex"));
 }
+
+
 
 // --- 2. GET Handler (Verification Handshake) ---
 export async function GET(req: NextRequest) {
