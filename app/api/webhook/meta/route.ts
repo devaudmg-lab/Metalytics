@@ -4,14 +4,40 @@ import { createHmac, timingSafeEqual } from "crypto";
 
 // --- 1. Security Verification ---
 function verifySignature(payload: string, signature: string | null) {
-  if (!signature) return false;
-  const appSecret = process.env.META_APP_SECRET;
-  if (!appSecret) return false;
+  console.log("Incoming Signature:", signature);
+  if (!signature) {
+    console.error("No signature found in headers");
+    return false;
+  }
 
-  const [algo, sig] = signature.split("=");
-  const hmac = createHmac("sha256", appSecret);
-  const digest = hmac.update(payload).digest("hex");
-  return timingSafeEqual(Buffer.from(sig, "utf8"), Buffer.from(digest, "utf8"));
+  const appSecret = process.env.META_APP_SECRET;
+  if (!appSecret) {
+    console.error("META_APP_SECRET is not defined in ENV");
+    return false;
+  }
+
+  try {
+    const parts = signature.split("=");
+    if (parts.length !== 2) return false;
+
+    const [algo, sig] = parts;
+    const hmac = createHmac("sha256", appSecret);
+    const digest = hmac.update(payload).digest("hex");
+
+    const isValid = timingSafeEqual(
+      Buffer.from(sig, "utf8"),
+      Buffer.from(digest, "utf8")
+    );
+
+    if (!isValid) {
+      console.error("Signature Mismatch! Expected:", digest, "Received:", sig);
+    }
+
+    return isValid;
+  } catch (e) {
+    console.error("Verification Error:", e);
+    return false;
+  }
 }
 
 // --- 2. GET Handler (Verification Handshake) ---
