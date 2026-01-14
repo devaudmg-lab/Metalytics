@@ -41,15 +41,20 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const entry = body.entry?.[0];
 
+  console.log("this is the entry = ", entry);
+
   try {
     // --- PART A: MESSENGER LOGIC ---
     if (entry?.messaging?.[0]) {
       const event = entry.messaging[0];
+      console.log("this is the event = ", event);
 
       const messageText = event.message?.text;
 
       const isEcho = event.message?.is_echo;
       const psid = isEcho ? event.recipient?.id : event.sender?.id;
+
+      console.log("this is the event = ", isEcho);
 
       // Ignore echoes (messages sent by the page itself)
       if (!psid) {
@@ -115,6 +120,8 @@ export async function POST(req: NextRequest) {
     else if (entry?.changes?.[0]?.value?.leadgen_id) {
       const leadgenId = entry.changes[0].value.leadgen_id;
 
+      console.log("this is the leadgenId Meta_Lead = ",leadgenId);
+
       // Check if this lead was already processed
       const { data: existingIdentity } = await supabase
         .from("meta_identities")
@@ -170,10 +177,10 @@ export async function POST(req: NextRequest) {
     }
 
     // --- PART C: WHATSAPP LOGIC ---
-    // --- PART C: WHATSAPP LOGIC ---
     else if (entry?.changes?.[0]?.value) {
       const value = entry.changes[0].value;
 
+      console.log("this is the value WHATSAPP LOGIC = ",value);
       // 1. Skip if it's just a status update (delivered/read)
       if (value.statuses) {
         return NextResponse.json({ success: true, skip: "status_update" });
