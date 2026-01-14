@@ -4,40 +4,20 @@ import { createHmac, timingSafeEqual } from "crypto";
 
 // --- 1. Security Verification ---
 function verifySignature(payload: string, signature: string | null) {
-  console.log("Incoming Signature:", signature);
-  if (!signature) {
-    console.error("No signature found in headers");
-    return false;
-  }
-
+  if (!signature) return false;
   const appSecret = process.env.META_APP_SECRET;
-  if (!appSecret) {
-    console.error("META_APP_SECRET is not defined in ENV");
-    return false;
-  }
+  if (!appSecret) return false;
 
-  try {
-    const parts = signature.split("=");
-    if (parts.length !== 2) return false;
+  const [algo, sig] = signature.split("=");
+  // Create HMAC using the raw string payload
+  const hmac = createHmac("sha256", appSecret);
+  const digest = hmac.update(payload, "utf8").digest("hex"); // Explicitly use utf8
 
-    const [algo, sig] = parts;
-    const hmac = createHmac("sha256", appSecret);
-    const digest = hmac.update(payload).digest("hex");
-
-    const isValid = timingSafeEqual(
-      Buffer.from(sig, "utf8"),
-      Buffer.from(digest, "utf8")
-    );
-
-    if (!isValid) {
-      console.error("Signature Mismatch! Expected:", digest, "Received:", sig);
-    }
-
-    return isValid;
-  } catch (e) {
-    console.error("Verification Error:", e);
-    return false;
-  }
+  // Don't use Buffer.from(sig, "utf8") because 'sig' is hex
+  return timingSafeEqual(
+    Buffer.from(sig, "hex"), 
+    Buffer.from(digest, "hex")
+  );
 }
 
 // --- 2. GET Handler (Verification Handshake) ---
@@ -55,13 +35,18 @@ export async function GET(req: NextRequest) {
 // --- 3. POST Handler (Main Logic) ---
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
+
+  console.log("Payload Length:", rawBody.length);
+
+  console.log("RAW_START:", rawBody.slice(0, 10), "RAW_END:", rawBody.slice(-10));
+
   const signature = req.headers.get("x-hub-signature-256");
+
+  console.log("Headers:", req.headers.get("x-hub-signature-256"), req.headers.get("x-hub-signature"));
 
   if (!verifySignature(rawBody, signature)) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
-
-  console.log("hello");
 
   const body = JSON.parse(rawBody);
   const supabase = await createClient();
