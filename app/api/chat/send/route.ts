@@ -1,49 +1,64 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/utils/supabase/server";
+import { sendWhatsAppText } from "@/utils/metaApi";
 
 export async function POST(req: NextRequest) {
   try {
-    const { text, recipient_id, lead_id } = await req.json();
+    const { leadId, message } = await req.json();
+    const supabase = await createClient();
 
-    // 1. Basic Validation
-    if (!text || !recipient_id || !lead_id) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    // 1. Fetch Lead to get Phone Number & Check Session
+    const { data: lead, error: leadErr } = await supabase
+      .from("leads")
+      .select("id, phone, last_interaction_at")
+      .eq("id", leadId)
+      .single();
+
+    if (leadErr || !lead) {
+      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     }
 
-    const pageAccessToken = process.env.META_PAGE_ACCESS_TOKEN;
-    if (!pageAccessToken) {
-      return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+    if (!lead.phone) {
+      return NextResponse.json({ error: "Lead has no phone number" }, { status: 400 });
     }
 
-    // 2. Send to Facebook Graph API
-    // Hum sirf Meta ko message bhejenge. Database mein save karne ka kaam 
-    // Webhook (Echo) apne aap kar lega jab message deliver hoga.
-    const fbResponse = await fetch(
-      `https://graph.facebook.com/v24.0/me/messages?access_token=${pageAccessToken}`,
+    // 2. Check 24-Hour Rule
+    const lastInteraction = lead.last_interaction_at ? new Date(lead.last_interaction_at) : null;
+    const now = new Date();
+    const diffHours = lastInteraction
+      ? (now.getTime() - lastInteraction.getTime()) / (1000 * 60 * 60)
+      : 999;
+
+    if (diffHours > 24) {
+      return NextResponse.json(
+        { error: "Session Expired. Please send a template." },
+        { status: 403 }
+      );
+    }
+
+    // 3. Send Message via Meta API
+    const metaRes = await sendWhatsAppText(lead.phone, message);
+    const waMessageId = metaRes.messages?.[0]?.id;
+
+    // 4. Log to DB
+    const { error: dbErr } = await supabase.from("lead_messages").insert([
       {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          recipient: { id: recipient_id },
-          message: { text: text },
-        }),
-      }
-    );
+        lead_id: lead.id,
+        sender: "page", // Sent by us
+        message_text: message,
+        wa_message_id: waMessageId,
+        status: "sent",
+        direction: "outbound",
+        type: "text"
+      },
+    ]);
 
-    const fbData = await fbResponse.json();
+    if (dbErr) throw dbErr;
 
-    if (fbData.error) {
-      console.error("Facebook API Error:", fbData.error);
-      return NextResponse.json({ error: fbData.error.message }, { status: 400 });
-    }
+    return NextResponse.json({ success: true, waMessageId });
 
-
-    return NextResponse.json({ 
-      success: true, 
-      fb_message_id: fbData.message_id 
-    });
-
-  } catch (err: any) {
-    console.error("Send API Error:", err.message);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (error: any) {
+    console.error("Send Error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -125,8 +125,15 @@ export async function POST(req: NextRequest) {
             lead_id: leadId,
             sender: isEcho ? "page" : "user",
             message_text: messageText,
+            direction: isEcho ? 'outbound' : 'inbound',
+            status: isEcho ? 'sent' : 'delivered'
           },
         ]);
+
+        // Update Session if User Sent Message
+        if (!isEcho) {
+          await supabase.from("leads").update({ last_interaction_at: new Date() }).eq("id", leadId);
+        }
       }
     }
 
@@ -134,7 +141,7 @@ export async function POST(req: NextRequest) {
     else if (entry?.changes?.[0]?.value?.leadgen_id) {
       const leadgenId = entry.changes[0].value.leadgen_id;
 
-      console.log("this is the leadgenId Meta_Lead = ",leadgenId);
+      console.log("this is the leadgenId Meta_Lead = ", leadgenId);
 
       // Check if this lead was already processed
       const { data: existingIdentity } = await supabase
@@ -194,10 +201,24 @@ export async function POST(req: NextRequest) {
     else if (entry?.changes?.[0]?.value) {
       const value = entry.changes[0].value;
 
-      console.log("this is the value WHATSAPP LOGIC = ",value);
-      // 1. Skip if it's just a status update (delivered/read)
-      if (value.statuses) {
-        return NextResponse.json({ success: true, skip: "status_update" });
+      console.log("this is the value WHATSAPP LOGIC = ", value);
+
+      // 1. Handle Status Updates (Sent/Delivered/Read)
+      if (value.statuses?.[0]) {
+        const statusUpdate = value.statuses[0];
+        const waMessageId = statusUpdate.id;
+        const newStatus = statusUpdate.status; // sent, delivered, read, failed
+
+        console.log(`UPDATE STATUS: ${waMessageId} -> ${newStatus}`);
+
+        const { error } = await supabase
+          .from("lead_messages")
+          .update({ status: newStatus })
+          .eq("wa_message_id", waMessageId);
+
+        if (error) console.error("Error updating status:", error);
+
+        return NextResponse.json({ success: true, type: "status_update" });
       }
 
       // 2. Process incoming messages
@@ -221,7 +242,7 @@ export async function POST(req: NextRequest) {
           // Create new lead
           const { data: newLead, error: lErr } = await supabase
             .from("leads")
-            .insert([{ full_name: userName, source: "whatsapp" }])
+            .insert([{ full_name: userName, source: "whatsapp", last_interaction_at: new Date() }])
             .select("id")
             .single();
 
@@ -236,6 +257,9 @@ export async function POST(req: NextRequest) {
               raw_metadata: { contact, message_id: message.id },
             },
           ]);
+        } else {
+          // Update Existing Lead Session
+          await supabase.from("leads").update({ last_interaction_at: new Date() }).eq("id", leadId);
         }
 
         // 3. Log Message only if text exists
@@ -243,8 +267,12 @@ export async function POST(req: NextRequest) {
           await supabase.from("lead_messages").insert([
             {
               lead_id: leadId,
-              sender: "user", // WhatsApp Webhook yahan sirf incoming message bhej raha hai
+              sender: "user",
               message_text: messageText,
+              wa_message_id: message.id,
+              status: "delivered", // Incoming is always delivered to us
+              direction: "inbound",
+              type: "text"
             },
           ]);
         }

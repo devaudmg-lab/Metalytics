@@ -16,7 +16,12 @@ import {
   X,
   Copy,
   Check,
+  CheckCheck,
+  Clock,
+  Lock,
+  Send,
   PencilIcon,
+  Trash2,
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import AddLocationForm from "../locations/AddLocationForm";
@@ -33,11 +38,150 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
   const [selectedId, setSelectedId] = useState<string | null>(
     adLeadsOnly[0]?.id || null
   );
+
+  const selectedLead = adLeadsOnly.find((l: any) => l.id === selectedId);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeLeadData, setActiveLeadData] = useState({ city: "", zip: "" });
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<"chat" | "notes">("notes"); // Default to notes for now
+  const [messages, setMessages] = useState<any[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState("hello_world");
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+
+  // Session Logic
+  const isActiveSession = useMemo(() => {
+    if (!selectedLead?.last_interaction_at) return false;
+    const lastInteraction = new Date(selectedLead.last_interaction_at);
+    const now = new Date();
+    const diff = now.getTime() - lastInteraction.getTime();
+    return diff < 24 * 60 * 60 * 1000; // 24 Hours in ms
+  }, [selectedLead]);
+
+  // Realtime Chat Subscription
+  useEffect(() => {
+    if (!selectedLead) return;
+
+    const fetchMessages = async () => {
+      const { data } = await supabase
+        .from("lead_messages")
+        .select("*")
+        .eq("lead_id", selectedLead.id)
+        .order("created_at", { ascending: true });
+      if (data) setMessages(data);
+    };
+    fetchMessages();
+
+    const channel = supabase
+      .channel(`chat_${selectedLead.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "lead_messages",
+          filter: `lead_id=eq.${selectedLead.id}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setMessages((prev) => [...prev, payload.new]);
+          } else if (payload.eventType === 'UPDATE') {
+            setMessages((prev) =>
+              prev.map((msg) => msg.id === payload.new.id ? payload.new : msg)
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedLead, supabase]);
+
+  // Fetch Templates
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      setIsLoadingTemplates(true);
+      try {
+        const res = await fetch("/api/chat/templates");
+        const data = await res.json();
+        if (data.success) {
+          setTemplates(data.templates);
+          if (data.templates.length > 0) setSelectedTemplate(data.templates[0].name);
+        }
+      } catch (e) {
+        console.error("Failed to fetch templates", e);
+      }
+      setIsLoadingTemplates(false);
+    };
+    if (!isActiveSession) {
+      fetchTemplates();
+    }
+  }, [isActiveSession]);
+
+  const sendMessage = async () => {
+    if (!newMessage.trim() || isSending) return;
+    setIsSending(true);
+    try {
+      await fetch("/api/chat/send", {
+        method: "POST",
+        body: JSON.stringify({ leadId: selectedLead.id, message: newMessage }),
+      });
+      setNewMessage("");
+    } catch (e) {
+      console.error("Send Failed", e);
+    }
+    setIsSending(false);
+  };
+
+  const sendTemplate = async () => {
+    if (isSending) return;
+    setIsSending(true);
+    try {
+      await fetch("/api/chat/template", {
+        method: "POST",
+        body: JSON.stringify({ leadId: selectedLead.id, templateName: selectedTemplate }),
+      });
+    } catch (e) {
+      console.error("Template Failed", e);
+    }
+    setIsSending(false);
+  };
+
+  const deleteMessage = async (messageId: string) => {
+    if (!window.confirm("Delete this message for everyone?")) return;
+
+    try {
+      const res = await fetch("/api/chat/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messageId }),
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        // Optimistic UI update
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === messageId || msg.wa_message_id === messageId
+              ? { ...msg, status: 'deleted', message_text: 'You deleted this message' }
+              : msg
+          )
+        );
+      } else {
+        alert(`Delete failed: ${result.error}`);
+      }
+    } catch (e) {
+      console.error("Network Error", e);
+    }
+  };
 
   useEffect(() => {
     if (!selectedId && adLeadsOnly.length > 0) {
@@ -54,17 +198,11 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
     );
   }, [adLeadsOnly, searchTerm]);
 
-  const selectedLead = adLeadsOnly.find((l: any) => l.id === selectedId);
-
-  // --- ROBUST DATA EXTRACTION ---
   const getRawData = (lead: any) => {
     if (!lead) return null;
-
-    // Check multiple paths for safety (Array vs Object)
     const identities = lead.meta_identities;
     const identity = Array.isArray(identities) ? identities[0] : identities;
     const raw = identity?.raw_metadata || lead.raw_data;
-
     try {
       return typeof raw === "string" ? JSON.parse(raw) : raw;
     } catch (e) {
@@ -81,17 +219,8 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
   const openLocationModal = (e: React.MouseEvent, lead: any) => {
     e.stopPropagation();
     const raw = getRawData(lead);
-
-    const city =
-      raw?.field_data?.find((f: any) => f.name.toLowerCase().includes("city"))
-        ?.values?.[0] || "VIC";
-    const zip =
-      raw?.field_data?.find(
-        (f: any) =>
-          f.name.toLowerCase().includes("zip") ||
-          f.name.toLowerCase().includes("post_code")
-      )?.values?.[0] || "";
-
+    const city = raw?.field_data?.find((f: any) => f.name.toLowerCase().includes("city"))?.values?.[0] || "VIC";
+    const zip = raw?.field_data?.find((f: any) => f.name.toLowerCase().includes("zip") || f.name.toLowerCase().includes("post_code"))?.values?.[0] || "";
     setActiveLeadData({ city, zip });
     setIsModalOpen(true);
   };
@@ -133,25 +262,16 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
       )}
 
       {/* 2. LEFT SIDEBAR */}
-      <aside
-        className={`${
-          isMobileDetailOpen ? "hidden" : "flex"
-        } lg:flex w-full lg:w-80 flex-col border-r border-gray-100 dark:border-white/5 bg-white dark:bg-[#080808]`}
-      >
+      <aside className={`${isMobileDetailOpen ? "hidden" : "flex"} lg:flex w-full lg:w-80 flex-col border-r border-gray-100 dark:border-white/5 bg-white dark:bg-[#080808]`}>
         <div className="p-4 md:p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-[10px] md:text-[15px] text-primary-btn font-semibold tracking-wider">
-              Incoming
-            </h3>
+            <h3 className="text-[10px] md:text-[15px] text-primary-btn font-semibold tracking-wider">Incoming</h3>
             <span className="px-2 py-0.5 rounded-sm bg-primary-btn/10 text-primary-btn text-[10px] md:text-[15px] font-bold">
               {filteredLeads.length} Leads
             </span>
           </div>
           <div className="relative group">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-800 group-focus-within:text-primary-btn transition-colors"
-              size={14}
-            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-800 group-focus-within:text-primary-btn transition-colors" size={14} />
             <input
               type="text"
               placeholder="Search by name, email..."
@@ -169,44 +289,22 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                 key={lead.id}
                 onClick={() => handleSelectLead(lead.id)}
                 className={`w-full text-left p-4 mb-2 border rounded-sm transition-all duration-300 flex items-start gap-3 relative group cursor-pointer
-                  ${
-                    selectedId === lead.id
-                      ? "bg-primary-btn/5 border-primary-btn/30 ring-1 ring-primary-btn/10"
-                      : "bg-white dark:bg-zinc-900/20 border-gray-100 dark:border-white/5 hover:border-gray-300 dark:hover:border-white/20"
-                  }
+                  ${selectedId === lead.id ? "bg-primary-btn/5 border-primary-btn/30 ring-1 ring-primary-btn/10" : "bg-white dark:bg-zinc-900/20 border-gray-100 dark:border-white/5 hover:border-gray-300 dark:hover:border-white/20"}
                   ${!lead.is_filtered && "border-l-4 border-l-red-500"}`}
               >
                 <div className="flex-1 truncate">
                   <div className="flex justify-between items-start">
-                    <p
-                      className={`text-sm md:text-lg font-semibold truncate ${
-                        selectedId === lead.id
-                          ? "text-primary-btn"
-                          : "text-foreground"
-                      }`}
-                    >
+                    <p className={`text-sm md:text-lg font-semibold truncate ${selectedId === lead.id ? "text-primary-btn" : "text-foreground"}`}>
                       {lead.full_name || "Untitled Lead"}
                     </p>
-                    <ArrowRight
-                      size={14}
-                      className={`text-primary-btn transition-all ${
-                        selectedId === lead.id
-                          ? "opacity-100 translate-x-0"
-                          : "opacity-0 -translate-x-2"
-                      }`}
-                    />
+                    <ArrowRight size={14} className={`text-primary-btn transition-all ${selectedId === lead.id ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"}`} />
                   </div>
                   <div className="flex justify-between items-center mt-2">
                     <p className="text-[15px] text-gray-500 font-medium tracking-tight">
-                      {lead.created_at
-                        ? formatDate(new Date(lead.created_at), "MMM dd, yyyy")
-                        : "N/A"}
+                      {lead.created_at ? formatDate(new Date(lead.created_at), "MMM dd, yyyy") : "N/A"}
                     </p>
                     {!lead.is_filtered && (
-                      <div
-                        onClick={(e) => openLocationModal(e, lead)}
-                        className="p-1.5 rounded-sm dark:bg-red-950/30 text-white bg-primary-btn cursor-pointer hover:scale-110 transition-all duration-100"
-                      >
+                      <div onClick={(e) => openLocationModal(e, lead)} className="p-1.5 rounded-sm dark:bg-red-950/30 text-white bg-primary-btn cursor-pointer hover:scale-110 transition-all duration-100">
                         <MapPinned size={14} />
                       </div>
                     )}
@@ -217,63 +315,35 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
           ) : (
             <div className="text-center py-20">
               <MessageSquare size={32} className="mx-auto mb-2 opacity-10" />
-              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">
-                No matching leads
-              </p>
+              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">No matching leads</p>
             </div>
           )}
         </div>
       </aside>
 
       {/* 3. MAIN AREA */}
-      <div
-        className={`${
-          isMobileDetailOpen ? "flex" : "hidden"
-        } lg:flex flex-1 flex-col lg:flex-row overflow-hidden`}
-      >
+      <div className={`${isMobileDetailOpen ? "flex" : "hidden"} lg:flex flex-1 flex-col lg:flex-row overflow-hidden`}>
         <main className="flex-1 flex flex-col bg-white dark:bg-[#080808] relative overflow-y-auto">
           {selectedLead ? (
             <div className="flex flex-col h-full">
               <header className="p-6 md:p-10 border-b border-gray-100 dark:border-white/5 flex flex-col md:flex-row justify-between items-start gap-6">
                 <div className="flex items-start gap-4">
-                  <button
-                    onClick={() => setIsMobileDetailOpen(false)}
-                    className="lg:hidden p-2 bg-gray-100 dark:bg-zinc-800 rounded-full"
-                  >
+                  <button onClick={() => setIsMobileDetailOpen(false)} className="lg:hidden p-2 bg-gray-100 dark:bg-zinc-800 rounded-full">
                     <ChevronLeft size={20} />
                   </button>
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-2xl md:text-4xl font-bold tracking-tight">
-                        {selectedLead.full_name}
-                      </h2>
-                      <span
-                        className={`px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider border ${
-                          selectedLead.is_filtered
-                            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
-                            : "bg-red-500/10 border-red-500/20 text-red-500"
-                        }`}
-                      >
-                        {selectedLead.is_filtered
-                          ? "Verified Region"
-                          : "Out of Region"}
+                      <h2 className="text-2xl md:text-4xl font-bold tracking-tight">{selectedLead.full_name}</h2>
+                      <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider border ${selectedLead.is_filtered ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600" : "bg-red-500/10 border-red-500/20 text-red-500"}`}>
+                        {selectedLead.is_filtered ? "Verified Region" : "Out of Region"}
                       </span>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-4">
                       <div className="flex items-center gap-2 text-sm text-gray-800 dark:text-zinc-400 bg-gray-50 dark:bg-white/5 px-3 py-1.5 rounded-sm">
                         <Mail size={14} className="text-primary-btn" />
-                        <span className="truncate max-w-[200px]">
-                          {selectedLead.email || "No Email"}
-                        </span>
-                        <button
-                          onClick={handleCopy}
-                          className="hover:text-primary-btn"
-                        >
-                          {copied ? (
-                            <Check size={14} className="text-emerald-500" />
-                          ) : (
-                            <Copy size={14} />
-                          )}
+                        <span className="truncate max-w-[200px]">{selectedLead.email || "No Email"}</span>
+                        <button onClick={handleCopy} className="hover:text-primary-btn">
+                          {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
                         </button>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-800 dark:text-zinc-400 bg-gray-50 dark:bg-white/5 px-3 py-1.5 rounded-sm">
@@ -283,64 +353,159 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={() =>
-                    window.open(
-                      `https://wa.me/${selectedLead.phone?.replace(/\D/g, "")}`,
-                      "_blank"
-                    )
-                  }
-                  className="w-full md:w-auto px-6 py-3 bg-primary-btn text-white rounded-sm font-bold text-xs uppercase flex items-center justify-center gap-3 hover:brightness-110 shadow-lg shadow-primary-btn/20 transition-all"
-                >
-                  Message on WhatsApp <ExternalLink size={14} />
-                </button>
+                <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-lg">
+                  {/* HIDDEN FOR NOW
+                  <button onClick={() => setActiveTab('chat')} className={`px-4 py-2 text-xs font-bold uppercase rounded-md transition-all ${activeTab === 'chat' ? 'bg-white dark:bg-zinc-800 shadow-sm text-primary-btn' : 'text-gray-500 hover:text-gray-700 dark:hover:text-zinc-300'}`}>Chat</button>
+                  */}
+                  <button onClick={() => setActiveTab('notes')} className={`px-4 py-2 text-xs font-bold uppercase rounded-md transition-all ${activeTab === 'notes' ? 'bg-white dark:bg-zinc-800 shadow-sm text-primary-btn' : 'text-gray-500 hover:text-gray-700 dark:hover:text-zinc-300'}`}>Notes</button>
+                </div>
               </header>
 
               <div className="p-6 md:p-10 flex-1">
-                <div className="max-w-3xl space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-bold text-xs uppercase text-gray-500 tracking-widest">
-                      <StickyNote size={16} className="text-primary-btn" /> Lead
-                      Observations
-                    </div>
-                    {savingId === selectedLead.id && (
-                      <div className="flex items-center gap-2 text-primary-btn text-xs font-bold animate-pulse">
-                        <Loader2 size={14} className="animate-spin" /> Saving...
+                {activeTab === 'notes' ? (
+                  <div className="max-w-3xl space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 font-bold text-xs uppercase text-gray-500 tracking-widest">
+                        <StickyNote size={16} className="text-primary-btn" /> Lead Observations
                       </div>
-                    )}
+                      {savingId === selectedLead.id && (
+                        <div className="flex items-center gap-2 text-primary-btn text-xs font-bold animate-pulse">
+                          <Loader2 size={14} className="animate-spin" /> Saving...
+                        </div>
+                      )}
+                    </div>
+                    <textarea
+                      key={selectedLead.id}
+                      className="w-full h-64 bg-gray-50 dark:bg-zinc-900/30 border border-gray-200 dark:border-white/10 rounded-sm p-8 text-lg outline-none focus:border-primary-btn/40 focus:ring-4 focus:ring-primary-btn/5 transition-all resize-none shadow-inner"
+                      placeholder="Add private notes about this prospect..."
+                      defaultValue={selectedLead.notes || ""}
+                      onBlur={(e) => onSave(selectedLead.id, e.target.value)}
+                    />
                   </div>
-                  <textarea
-                    key={selectedLead.id}
-                    className="w-full h-64 bg-gray-50 dark:bg-zinc-900/30 border border-gray-200 dark:border-white/10 rounded-sm p-8 text-lg outline-none focus:border-primary-btn/40 focus:ring-4 focus:ring-primary-btn/5 transition-all resize-none shadow-inner"
-                    placeholder="Add private notes about this prospect..."
-                    defaultValue={selectedLead.notes || ""}
-                    onBlur={(e) => onSave(selectedLead.id, e.target.value)}
-                  />
-                </div>
+                ) : (
+                  <div className="flex flex-col h-[600px] border border-gray-200 dark:border-white/5 rounded-lg bg-gray-50/50 dark:bg-zinc-900/20 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    {/* Messages Area */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                      {messages.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                          <MessageSquare size={48} className="mb-2 opacity-20" />
+                          <p className="text-xs uppercase font-bold text-gray-400">No messages yet</p>
+                        </div>
+                      ) : (
+                        messages.map((msg) => {
+                          const isOutbound = msg.direction === 'outbound' || msg.sender === 'page';
+                          return (
+                            <div key={msg.id} className={`flex group items-center gap-2 ${isOutbound ? 'justify-end' : 'justify-start'}`}>
+                              {/* Delete Button (Hover UI) */}
+                              {/* 
+                                  NOTE: Delete for Everyone is NOT supported by standard Meta Cloud API v21.0.
+                                  It requires On-Premise API or specific BSP access.
+                                  Button removed to prevent errors.
+                              */}
+
+                              <div className={`max-w-[70%] p-3 rounded-lg text-sm shadow-sm relative ${isOutbound ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-black dark:text-white rounded-tr-none' : 'bg-white dark:bg-zinc-800 border dark:border-white/5 rounded-tl-none'}`}>
+                                {msg.status === 'deleted' ? (
+                                  <p className="italic opacity-50 flex items-center gap-2">
+                                    <Lock size={12} /> This message was deleted
+                                  </p>
+                                ) : (
+                                  <p>{msg.message_text}</p>
+                                )}
+                                <div className="flex items-center justify-end gap-1 mt-1 opacity-70">
+                                  <span className="text-[10px]">{formatDate(new Date(msg.created_at), 'h:mm a')}</span>
+                                  {isOutbound && msg.status !== 'deleted' && (
+                                    <span className="text-primary-btn dark:text-blue-300">
+                                      {msg.status === 'read' ? <CheckCheck size={12} className="text-blue-500" /> :
+                                        msg.status === 'delivered' ? <CheckCheck size={12} /> :
+                                          <Check size={12} />}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })
+                      )}
+                    </div>
+
+                    {/* Input Area */}
+                    {/* INPUT AREA HIDDEN FOR PRODUCTION (TESTING ONLY)
+                    <div className="p-4 bg-white dark:bg-zinc-900 border-t border-gray-100 dark:border-white/5">
+                      {isActiveSession ? (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            className="flex-1 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-white/10 rounded-full px-4 text-sm outline-none focus:border-primary-btn/50 focus:ring-2 focus:ring-primary-btn/10 transition-all"
+                            placeholder="Type a message..."
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                          />
+                          <button
+                            onClick={sendMessage}
+                            disabled={isSending || !newMessage.trim()}
+                            className="p-3 bg-primary-btn text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {isSending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 p-4 rounded-lg">
+                          <div className="flex items-center gap-3 text-amber-700 dark:text-amber-500">
+                            <Lock size={18} />
+                            <div>
+                              <p className="text-xs font-bold uppercase">Session Expired</p>
+                              <p className="text-[10px] opacity-80">24-hour window closed. Select a template to start conversation.</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 w-full">
+                            <select
+                              className="flex-1 bg-white dark:bg-zinc-800 border border-amber-300 dark:border-amber-700 rounded-md px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-amber-500/20"
+                              value={selectedTemplate}
+                              onChange={(e) => setSelectedTemplate(e.target.value)}
+                              disabled={isSending || isLoadingTemplates}
+                            >
+                              {isLoadingTemplates ? (
+                                <option>Loading templates...</option>
+                              ) : templates.length > 0 ? (
+                                templates.map((t: any) => (
+                                  <option key={t.id} value={t.name}>{t.name} ({t.language})</option>
+                                ))
+                              ) : (
+                                <option value="hello_world">hello_world (Default)</option>
+                              )}
+                            </select>
+                            <button
+                              onClick={sendTemplate}
+                              disabled={isSending}
+                              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold uppercase rounded-md shadow-sm transition-colors flex items-center gap-2"
+                            >
+                              {isSending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                              Send
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    */}
+                  </div>
+                )}
                 <div className="lg:hidden mt-12 border-t pt-10">
-                  <IntelligenceContent
-                    selectedLead={selectedLead}
-                    getRawData={getRawData}
-                  />
+                  <IntelligenceContent selectedLead={selectedLead} getRawData={getRawData} />
                 </div>
               </div>
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center opacity-20">
               <MessageSquare size={64} className="mb-4" />
-              <p className="text-xl font-bold uppercase tracking-[0.2em]">
-                Select a lead to begin
-              </p>
+              <p className="text-xl font-bold uppercase tracking-[0.2em]">Select a lead to begin</p>
             </div>
           )}
         </main>
 
         {/* 4. RIGHT SIDEBAR */}
         <aside className="hidden lg:block w-[400px] border-l border-gray-100 dark:border-white/5 bg-gray-50/30 dark:bg-[#080808] overflow-y-auto custom-scrollbar">
-          <IntelligenceContent
-            selectedLead={selectedLead}
-            getRawData={getRawData}
-          />
+          <IntelligenceContent selectedLead={selectedLead} getRawData={getRawData} />
         </aside>
       </div>
     </div>
@@ -362,22 +527,15 @@ function IntelligenceContent({ selectedLead, getRawData }: any) {
   if (!selectedLead) return null;
 
   const raw = getRawData(selectedLead);
-
-  // Logic for identity normalization
-  const identity = Array.isArray(selectedLead.meta_identities)
-    ? selectedLead.meta_identities[0]
-    : selectedLead.meta_identities;
+  const identity = Array.isArray(selectedLead.meta_identities) ? selectedLead.meta_identities[0] : selectedLead.meta_identities;
 
   const handleUpdatePostal = async () => {
     if (!editedZip) return;
     setIsUpdating(true);
-    const { error } = await supabase
-      .from("leads")
-      .update({ postal_code: editedZip })
-      .eq("id", selectedLead.id);
+    const { error } = await supabase.from("leads").update({ postal_code: editedZip }).eq("id", selectedLead.id);
     if (!error) {
       setIsEditingZip(false);
-      selectedLead.postal_code = editedZip; // Local UI update
+      selectedLead.postal_code = editedZip;
     }
     setIsUpdating(false);
   };
@@ -385,7 +543,7 @@ function IntelligenceContent({ selectedLead, getRawData }: any) {
   return (
     <div className="p-8 space-y-8">
       <div className="flex items-center justify-between">
-        <h3 className="text-[15px] font-semibold text-black flex items-center gap-2">
+        <h3 className="text-[15px] font-semibold text-black dark:text-white flex items-center gap-2">
           <ClipboardList size={16} /> Lead Data Intelligence
         </h3>
       </div>
@@ -393,70 +551,30 @@ function IntelligenceContent({ selectedLead, getRawData }: any) {
       <div className="space-y-3">
         {!raw?.field_data ? (
           <div className="py-12 border-2 border-dashed border-gray-100 dark:border-white/5 rounded-sm text-center">
-            <p className="text-[10px] font-bold text-gray-800 uppercase tracking-widest">
-              Metadata Not Available
-            </p>
+            <p className="text-[10px] font-bold text-gray-800 dark:text-gray-400 uppercase tracking-widest">Metadata Not Available</p>
           </div>
         ) : (
           raw.field_data.map((field: any, i: number) => {
-            if (["full_name", "email", "phone_number"].includes(field.name))
-              return null;
-
-            const isPostalField =
-              field.name.toLowerCase().includes("post_code") ||
-              field.name.toLowerCase().includes("zip");
-
+            if (["full_name", "email", "phone_number"].includes(field.name)) return null;
+            const isPostalField = field.name.toLowerCase().includes("post_code") || field.name.toLowerCase().includes("zip");
             return (
-              <div
-                key={i}
-                className="group p-5 bg-white dark:bg-zinc-900/40 border border-gray-200 dark:border-white/5 rounded-sm hover:border-primary-btn/20 transition-all"
-              >
+              <div key={i} className="group p-5 bg-white dark:bg-zinc-900/40 border border-gray-200 dark:border-white/5 rounded-sm hover:border-primary-btn/20 transition-all">
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs uppercase text-gray-700 dark:text-zinc-600">
-                    {field.name.replace(/_/g, " ")}
-                  </span>
+                  <span className="text-xs uppercase text-gray-700 dark:text-zinc-500">{field.name.replace(/_/g, " ")}</span>
                   {isPostalField && !isEditingZip && (
-                    <PencilIcon
-                      size={14}
-                      className="text-gray-500 hover:text-primary-btn cursor-pointer transition-colors"
-                      onClick={() => setIsEditingZip(true)}
-                    />
+                    <PencilIcon size={14} className="text-gray-500 hover:text-primary-btn cursor-pointer transition-colors" onClick={() => setIsEditingZip(true)} />
                   )}
                 </div>
-
                 {isPostalField && isEditingZip ? (
                   <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      className="flex-1 bg-gray-50 dark:bg-zinc-800 border border-primary-btn/30 rounded-sm px-3 py-1.5 text-sm outline-none font-bold"
-                      value={editedZip}
-                      onChange={(e) => setEditedZip(e.target.value)}
-                      autoFocus
-                    />
-                    <button
-                      onClick={handleUpdatePostal}
-                      disabled={isUpdating}
-                      className="p-2 bg-emerald-500 text-white rounded-sm hover:bg-emerald-600 disabled:opacity-50"
-                    >
-                      {isUpdating ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <Check size={14} />
-                      )}
+                    <input type="text" className="flex-1 bg-gray-50 dark:bg-zinc-800 border border-primary-btn/30 rounded-sm px-3 py-1.5 text-sm outline-none font-bold" value={editedZip} onChange={(e) => setEditedZip(e.target.value)} autoFocus />
+                    <button onClick={handleUpdatePostal} disabled={isUpdating} className="p-2 bg-emerald-500 text-white rounded-sm hover:bg-emerald-600 disabled:opacity-50">
+                      {isUpdating ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                     </button>
-                    <button
-                      onClick={() => setIsEditingZip(false)}
-                      className="p-2 bg-gray-200 dark:bg-zinc-700 text-gray-800 dark:text-gray-300 rounded-sm hover:bg-gray-300"
-                    >
-                      <X size={14} />
-                    </button>
+                    <button onClick={() => setIsEditingZip(false)} className="p-2 bg-gray-200 dark:bg-zinc-700 text-gray-800 dark:text-gray-300 rounded-sm hover:bg-gray-300"><X size={14} /></button>
                   </div>
                 ) : (
-                  <p className="text-[15px] font-bold text-foreground break-words">
-                    {isPostalField
-                      ? selectedLead.postal_code || field.values?.[0]
-                      : field.values?.[0] || "—"}
-                  </p>
+                  <p className="text-[15px] font-bold text-foreground break-words">{isPostalField ? selectedLead.postal_code || field.values?.[0] : field.values?.[0] || "—"}</p>
                 )}
               </div>
             );
@@ -466,48 +584,17 @@ function IntelligenceContent({ selectedLead, getRawData }: any) {
 
       <div className="pt-8 border-t border-gray-100 dark:border-white/5 space-y-4">
         <div className="flex justify-between items-center text-[11px] font-bold">
-          <span className="text-gray-800 uppercase tracking-widest">
-            Meta Lead ID
-          </span>
-          <span className="bg-gray-100 dark:bg-white/5 px-2 py-1 rounded-sm font-mono text-gray-800 dark:text-zinc-400 select-all">
-            {identity?.meta_lead_id || "N/A"}
-          </span>
+          <span className="text-gray-800 dark:text-gray-400 uppercase tracking-widest">Meta Lead ID</span>
+          <span className="bg-gray-100 dark:bg-white/5 px-2 py-1 rounded-sm font-mono text-gray-800 dark:text-zinc-400 select-all">{identity?.meta_lead_id || "N/A"}</span>
         </div>
-
-        {/* Time Zones Section */}
         <div className="space-y-2">
           <div className="flex justify-between items-center text-[11px] font-bold">
-            <span className="text-gray-800 uppercase tracking-widest">
-              Captured (AUS)
-            </span>
-            <span className="text-gray-800 dark:text-zinc-400">
-              {new Date(selectedLead.created_at).toLocaleString("en-AU", {
-                timeZone: "Australia/Melbourne",
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              })}
-            </span>
+            <span className="text-gray-800 dark:text-gray-400 uppercase tracking-widest">Captured (AUS)</span>
+            <span className="text-gray-800 dark:text-zinc-400">{new Date(selectedLead.created_at).toLocaleString("en-AU", { timeZone: "Australia/Melbourne", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true })}</span>
           </div>
-
           <div className="flex justify-between items-center text-[11px] font-bold">
-            <span className="text-gray-800 uppercase tracking-widest">
-              Captured (IND)
-            </span>
-            <span className="text-gray-800 dark:text-zinc-400">
-              {new Date(selectedLead.created_at).toLocaleString("en-IN", {
-                timeZone: "Asia/Kolkata",
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              })}
-            </span>
+            <span className="text-gray-800 dark:text-gray-400 uppercase tracking-widest">Captured (IND)</span>
+            <span className="text-gray-800 dark:text-zinc-400">{new Date(selectedLead.created_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true })}</span>
           </div>
         </div>
       </div>
