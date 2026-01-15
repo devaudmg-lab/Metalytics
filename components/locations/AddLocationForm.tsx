@@ -86,7 +86,7 @@ export default function AddLocationForm({
         <button
           type="submit"
           disabled={loading}
-          className="relative overflow-hidden cursor-pointer bg-primary-btn disabled:bg-slate-200 dark:disabled:bg-slate-800 text-white rounded-sm uppercase text-[11px] font-black tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-3  shadow-indigo-500/20 group h-[60px]"
+          className="relative overflow-hidden cursor-pointer bg-primary-btn disabled:bg-slate-200 dark:disabled:bg-slate-800 text-white rounded-sm uppercase text-[11px] font-black tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-3 group h-[60px]"
         >
           {loading ? (
             <Loader2 className="animate-spin" size={18} />

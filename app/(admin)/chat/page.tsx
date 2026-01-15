@@ -62,41 +62,51 @@ export default function ChatPage() {
     }, [selectedLeadId, supabase]);
 
     // 3. Smart Send Message Handler (WhatsApp vs Messenger)
-    const handleSendMessage = async (text: string) => {
-        if (!selectedLead) return;
+ // 3. Smart Send Message Handler (Updated for Media Support)
+const handleSendMessage = async (text: string, mediaUrl?: string) => {
+    if (!selectedLead) return;
 
-        const identity = selectedLead.meta_identities;
-        const source = selectedLead.source;
+    const identity = selectedLead.meta_identities;
+    const source = selectedLead.source;
 
-        let endpoint = "/api/chat/send"; 
-        let payload: any = { text, lead_id: selectedLeadId };
-
-        if (source === "whatsapp" || (!identity?.messenger_psid && identity?.whatsapp_number)) {
-            endpoint = "/api/chat/send-whatsapp";
-            payload.recipient_wa_id = identity?.whatsapp_number;
-            payload.recipient_id = identity?.whatsapp_number; 
-        } else {
-            if (!identity?.messenger_psid) {
-                console.error("No Messenger PSID found.");
-                return;
-            }
-            payload.recipient_id = identity.messenger_psid;
-        }
-
-        try {
-            const response = await fetch(endpoint, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) {
-                const result = await response.json();
-                console.error(`Error: ${result.error}`);
-            }
-        } catch (err) { 
-            console.error("Network error sending message."); 
-        }
+    // Default endpoint
+    let endpoint = "/api/chat/send"; 
+    
+    // Payload mein text ke saath media_url bhi add kar diya
+    let payload: any = { 
+        text, 
+        lead_id: selectedLeadId,
+        media_url: mediaUrl 
     };
+
+    // WhatsApp vs Messenger Logic
+    if (source === "whatsapp" || (!identity?.messenger_psid && identity?.whatsapp_number)) {
+        endpoint = "/api/chat/send-whatsapp";
+        payload.recipient_wa_id = identity?.whatsapp_number;
+        payload.recipient_id = identity?.whatsapp_number; 
+    } else {
+        if (!identity?.messenger_psid) {
+            console.error("No Messenger PSID found.");
+            return;
+        }
+        payload.recipient_id = identity.messenger_psid;
+    }
+
+    try {
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+            const result = await response.json();
+            console.error(`Error: ${result.error}`);
+        }
+    } catch (err) { 
+        console.error("Network error sending message.",err); 
+    }
+};
 
     return (
         <div className="flex h-[calc(100vh-80px)] md:h-[calc(100vh-120px)] w-full border border-slate-200 dark:border-slate-800 md:rounded-xl overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-black/40 bg-white dark:bg-slate-950 transition-colors duration-300">

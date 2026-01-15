@@ -83,7 +83,7 @@ export default function LeadsList({ initialLeads }: { initialLeads: any[] }) {
     <div className="flex flex-col min-h-screen space-y-4 md:space-y-6 pb-10 md:pb-20 transition-colors duration-300">
       
       {/* Sticky Header Control Section */}
-      <section className="sticky top-20 z-40 w-full animate-in fade-in slide-in-from-top-2 duration-500">
+      <section className="lg:sticky top-20 z-40 w-full animate-in fade-in slide-in-from-top-2 duration-500">
         <ControlBar
           viewMode={viewMode}
           setViewMode={setViewMode}
