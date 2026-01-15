@@ -1,10 +1,19 @@
 "use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, MapPinned, Activity, Menu, X, Sun, Moon, MessageSquare } from 'lucide-react';
-import { useState } from 'react';
-import { useTheme } from '@/context/ThemeContext';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  MapPinned,
+  Activity,
+  Menu,
+  X,
+  Sun,
+  Moon,
+  MessageSquare,
+} from "lucide-react";
+import { useState } from "react";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -14,16 +23,18 @@ export default function Navbar() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-border-custom bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl transition-colors duration-300">
+    <nav className="sticky top-0 z-50 w-full border-b border-border-custom bg-background/80 backdrop-blur-xl transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 md:h-20 flex items-center justify-between">
-
         {/* Logo Section */}
         <div className="flex items-center gap-4 md:gap-8">
-          <Link href="/" className="flex items-center gap-2 md:gap-3 group">
-            <div className="w-9 h-9 md:w-10 md:h-10 bg-primary-btn rounded-xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-all">
+          <Link
+            href="/"
+            className="flex items-center gap-2 md:gap-3 group cursor-pointer"
+          >
+            <div className="w-9 h-9 md:w-10 md:h-10 bg-primary-btn rounded-sm flex items-center justify-center  group-hover:rotate-3 transition-all cursor-pointer">
               <Activity size={20} className="text-white" />
             </div>
-            <span className="text-lg md:text-xl font-bold er text-gray-900 dark:text-white">
+            <span className="text-lg md:text-xl font-black tracking-tighter text-foreground uppercase">
               META<span className="text-primary-btn">LYTICS</span>
             </span>
           </Link>
@@ -32,21 +43,21 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-1">
             <NavLink
               href="/leads"
-              icon={<LayoutDashboard size={16} />}
+              icon={<LayoutDashboard size={14} />}
               label="Dashboard"
-              active={isActive('/leads')}
+              active={isActive("/leads")}
             />
             <NavLink
               href="/locations"
-              icon={<MapPinned size={16} />}
+              icon={<MapPinned size={14} />}
               label="Locations"
-              active={isActive('/locations')}
+              active={isActive("/locations")}
             />
             <NavLink
               href="/chat"
-              icon={<MessageSquare size={16} />}
+              icon={<MessageSquare size={14} />}
               label="Inbox"
-              active={isActive('/chat')}
+              active={isActive("/chat")}
             />
           </div>
         </div>
@@ -54,62 +65,75 @@ export default function Navbar() {
         {/* Right Side */}
         <div className="flex items-center gap-3">
           <div className="hidden lg:flex flex-col items-end mr-3">
-            <span className="text-[10px] font-bold text-gray-700 uppercase">System Status</span>
+            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+              System Status
+            </span>
             <span className="text-[10px] font-bold text-emerald-500 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-              Live
+              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-none animate-pulse"></span>
+              LIVE ENGINE
             </span>
           </div>
 
-          {/* 3. Theme Toggle Button */}
+          {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
-            className="p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:text-primary-btn transition-all group"
+            className="p-2.5 rounded-sm bg-toggle border border-border-custom text-muted-foreground hover:text-primary-btn hover:border-primary-btn/30 transition-all group cursor-pointer"
             aria-label="Toggle Theme"
           >
             {theme === "light" ? (
-              <Moon size={18} className="group-active:scale-90 transition-transform" />
+              <Moon
+                size={18}
+                className="group-active:scale-90 transition-transform cursor-pointer"
+              />
             ) : (
-              <Sun size={18} className="text-yellow-500 group-active:scale-90 transition-transform" />
+              <Sun
+                size={18}
+                className="text-yellow-500 group-active:scale-90 transition-transform cursor-pointer"
+              />
             )}
           </button>
 
-          <div className="w-9 h-9 rounded-full bg-primary-btn flex items-center justify-center text-white text-xs font-bold ring-2 ring-offset-2 ring-primary-btn/20 dark:ring-offset-black">
+          {/* User Profile Avatar - Changed to Square */}
+          <div className="w-9 h-9 rounded-sm bg-primary-btn flex items-center justify-center text-white text-xs font-black ring-1 ring-offset-2 ring-primary-btn/20 dark:ring-offset-background cursor-pointer">
             AD
           </div>
 
           {/* Mobile Toggle */}
           <button
-            className="md:hidden p-2 text-black dark:text-gray-300"
+            className="md:hidden p-2 text-foreground cursor-pointer"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMenuOpen ? (
+              <X size={24} className="cursor-pointer" />
+            ) : (
+              <Menu size={24} className="cursor-pointer" />
+            )}
           </button>
         </div>
       </div>
 
       {/* Mobile Menu Dropdown */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-border-custom px-4 py-6 flex flex-col gap-3 animate-in slide-in-from-top duration-300">
+        <div className="md:hidden bg-card border-b border-border-custom px-4 py-6 flex flex-col gap-2 animate-in slide-in-from-top-2 duration-300">
           <MobileNavLink
             href="/leads"
-            icon={<LayoutDashboard size={20} />}
+            icon={<LayoutDashboard size={18} />}
             label="Dashboard"
-            active={isActive('/leads')}
+            active={isActive("/leads")}
             onClick={() => setIsMenuOpen(false)}
           />
           <MobileNavLink
             href="/locations"
-            icon={<MapPinned size={20} />}
+            icon={<MapPinned size={18} />}
             label="Locations"
-            active={isActive('/locations')}
+            active={isActive("/locations")}
             onClick={() => setIsMenuOpen(false)}
           />
           <MobileNavLink
-              href="/chat"
-              icon={<MessageSquare size={16} />}
-              label="Inbox"
-              active={isActive('/chat')}
+            href="/chat"
+            icon={<MessageSquare size={18} />}
+            label="Inbox"
+            active={isActive("/chat")}
             onClick={() => setIsMenuOpen(false)}
           />
         </div>
@@ -118,15 +142,15 @@ export default function Navbar() {
   );
 }
 
-// Reusable NavLink components remain same...
 function NavLink({ href, icon, label, active }: any) {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2 px-4 py-2 text-[12px] rounded-[4px] font-bold uppercase  transition-all ${active
-        ? 'bg-primary-btn/10 text-primary-btn'
-        : 'text-gray-500 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5'
-        }`}
+      className={`flex items-center gap-2 px-4 py-2 text-[11px] rounded-sm uppercase transition-all cursor-pointer ${
+        active
+          ? "bg-primary-btn/10 text-primary-btn"
+          : "text-muted-foreground hover:bg-toggle hover:text-foreground"
+      }`}
     >
       {icon} {label}
     </Link>
@@ -138,10 +162,11 @@ function MobileNavLink({ href, icon, label, active, onClick }: any) {
     <Link
       href={href}
       onClick={onClick}
-      className={`flex items-center gap-4 p-4 rounded-[4px] font-bold transition-all ${active
-        ? 'bg-primary-btn/10 text-primary-btn'
-        : 'text-black dark:text-gray-400 bg-gray-50 dark:bg-white/5'
-        }`}
+      className={`flex items-center gap-4 p-4 rounded-sm uppercase text-[11px] transition-all cursor-pointer ${
+        active
+          ? "bg-primary-btn/10 text-primary-btn"
+          : "text-foreground bg-toggle/50 border border-border-custom"
+      }`}
     >
       {icon} {label}
     </Link>

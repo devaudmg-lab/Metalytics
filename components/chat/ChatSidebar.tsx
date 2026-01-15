@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react"; // 1. Added useState
-import { MessageSquare, Phone, User, Search, X } from "lucide-react"; // Added X for clearing
+import { useMemo, useState } from "react";
+import { MessageSquare, Phone, User, Search, X, Zap } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export type ChatTab = "all" | "messenger" | "whatsapp";
@@ -21,19 +21,15 @@ export default function ChatSidebar({
   activeTab,
   onTabChange,
 }: ChatSidebarProps) {
-  // 🎯 State for Search
   const [searchQuery, setSearchQuery] = useState("");
 
-  // 🎯 Filtering Logic: Based on lead.source AND searchQuery
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
-      // Tab filtering
       const matchesTab =
         activeTab === "all" ||
         (activeTab === "messenger" && lead.source === "messenger") ||
         (activeTab === "whatsapp" && lead.source === "whatsapp");
 
-      // Search filtering (matches name or source)
       const matchesSearch =
         lead.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lead.source?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -43,39 +39,39 @@ export default function ChatSidebar({
   }, [leads, activeTab, searchQuery]);
 
   return (
-    <div className="w-full flex flex-col h-full bg-white dark:bg-[#080808]">
+    <div className="w-full flex flex-col h-full bg-white dark:bg-slate-950 transition-colors">
       {/* Header Section */}
-      <div className="p-4 border-b border-gray-100 dark:border-white/5">
+      <div className="p-4 border-b border-slate-100 dark:border-slate-800/50">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-slate-50 uppercase">
             Inbox
           </h2>
 
           {/* Search Input UI */}
-          <div className="relative flex-1 ml-4">
+          <div className="relative flex-1 ml-4 group">
             <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"
             />
             <input
               type="text"
               placeholder="Search leads..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-gray-100 dark:bg-zinc-900/50 border-none rounded-full py-1.5 pl-9 pr-8 text-sm focus:ring-1 focus:ring-blue-500 outline-none text-gray-900 dark:text-white"
+              className="w-full bg-slate-100 dark:bg-slate-900 border border-transparent focus:border-indigo-500/30 rounded-full py-2 pl-9 pr-8 text-sm focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-500 transition-all font-medium"
             />
             {searchQuery && (
               <X
                 size={14}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer hover:text-slate-600 dark:hover:text-slate-200"
                 onClick={() => setSearchQuery("")}
               />
             )}
           </div>
         </div>
 
-        {/* WhatsApp Style Tabs */}
-        <div className="flex bg-gray-100 dark:bg-zinc-900/50 p-1 rounded-lg gap-1">
+        {/* Action Tabs */}
+        <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl gap-1">
           <TabButton
             active={activeTab === "all"}
             onClick={() => onTabChange("all")}
@@ -92,7 +88,6 @@ export default function ChatSidebar({
             onClick={() => onTabChange("whatsapp")}
             label="WhatsApp"
             icon={<Phone size={14} />}
-            isWhatsApp={true}
           />
         </div>
       </div>
@@ -101,10 +96,13 @@ export default function ChatSidebar({
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {filteredLeads.length === 0 ? (
           <div className="p-10 text-center flex flex-col items-center">
-            <div className="w-12 h-12 bg-gray-50 dark:bg-zinc-900 rounded-full flex items-center justify-center mb-3">
-              <Search size={20} className="text-gray-300" />
+            <div className="w-12 h-12 bg-slate-50 dark:bg-slate-900 rounded-full flex items-center justify-center mb-3">
+              <Search
+                size={20}
+                className="text-slate-300 dark:text-slate-700"
+              />
             </div>
-            <p className="text-sm text-gray-400 italic">
+            <p className="text-sm text-slate-400 italic">
               {searchQuery
                 ? `No results for "${searchQuery}"`
                 : `No ${activeTab} conversations`}
@@ -120,41 +118,35 @@ export default function ChatSidebar({
               <button
                 key={lead.id}
                 onClick={() => onSelectLead(lead.id)}
-                className={`w-full p-4 flex items-center gap-3 border-b border-gray-100 dark:border-white/5 transition-all outline-none ${
+                className={`w-full p-5 flex items-center gap-4 border-b border-slate-50 dark:border-slate-800/40 cursor-pointer transition-all outline-none relative group ${
                   isSelected
-                    ? isWhatsApp
-                      ? "bg-emerald-50 dark:bg-emerald-900/10 border-r-4 border-r-emerald-600"
-                      : "bg-blue-50 dark:bg-blue-900/10 border-r-4 border-r-blue-600"
-                    : "hover:bg-gray-50 dark:hover:bg-white/5"
+                    ? "bg-indigo-50/50 dark:bg-indigo-500/5 border-l-4 border-l-indigo-600 dark:border-l-indigo-500"
+                    : "hover:bg-slate-50 dark:hover:bg-slate-900/50 border-l-4 border-l-transparent"
                 }`}
               >
-                {/* Avatar with Source Based Colors */}
+                {/* Avatar */}
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-sm ${
-                    isMetaAd
-                      ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600"
-                      : isWhatsApp
-                      ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600"
-                      : "bg-blue-100 dark:bg-blue-900/30 text-blue-600"
+                  className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-sm transition-transform duration-300 group-hover:scale-105 ${
+                    isSelected
+                      ? "bg-primary-btn text-white"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
                   }`}
                 >
-                  <User size={22} />
+                  <User size={20} />
                 </div>
 
                 <div className="flex-1 min-w-0 text-left">
                   <div className="flex justify-between items-center mb-1">
                     <h4
-                      className={`text-[15px] truncate ${
+                      className={`text-[15px] truncate transition-colors ${
                         isSelected
-                          ? isWhatsApp
-                            ? "font-bold text-emerald-600"
-                            : "font-bold text-blue-600"
-                          : "font-semibold text-gray-900 dark:text-gray-100"
+                          ? "font-bold text-primary-btn dark:text-indigo-400"
+                          : "font-bold text-slate-900 dark:text-slate-100"
                       }`}
                     >
                       {lead.full_name || "New Prospect"}
                     </h4>
-                    <span className="text-[10px] text-gray-400 font-medium">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
                       {lead.created_at
                         ? formatDistanceToNow(new Date(lead.created_at), {
                             addSuffix: false,
@@ -165,21 +157,27 @@ export default function ChatSidebar({
 
                   <div className="flex items-center gap-1.5">
                     {isMetaAd ? (
-                      <span className="text-[8px] bg-orange-500 text-white px-1 py-0.5 rounded font-black tracking-tighter uppercase">
-                        AD
-                      </span>
+                      <div className="flex items-center gap-1 text-orange-500">
+                        <Zap size={10} fill="currentColor" />
+                        <span className="text-[11px] font-black uppercase tracking-tighter">
+                          Meta Lead
+                        </span>
+                      </div>
                     ) : isWhatsApp ? (
-                      <Phone size={12} className="text-emerald-500" />
+                      <div className="flex items-center gap-1 text-emerald-500">
+                        <Phone size={10} />
+                        <span className="text-[11px] font-black uppercase tracking-tighter">
+                          WhatsApp
+                        </span>
+                      </div>
                     ) : (
-                      <MessageSquare size={12} className="text-blue-500" />
+                      <div className="flex items-center gap-1 text-primary-btn">
+                        <MessageSquare size={10} />
+                        <span className="text-[11px] font-black uppercase tracking-tighter">
+                          Messenger
+                        </span>
+                      </div>
                     )}
-                    <p className="text-[13px] text-gray-500 dark:text-gray-400 truncate">
-                      {isMetaAd
-                        ? "Meta Lead Form"
-                        : isWhatsApp
-                        ? "WhatsApp Chat"
-                        : "Messenger Chat"}
-                    </p>
                   </div>
                 </div>
               </button>
@@ -191,17 +189,14 @@ export default function ChatSidebar({
   );
 }
 
-// Sub-component for Tabs
-function TabButton({ active, onClick, label, icon, isWhatsApp }: any) {
+function TabButton({ active, onClick, label, icon }: any) {
   return (
     <button
       onClick={onClick}
-      className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold uppercase rounded-md transition-all ${
+      className={`flex-1 flex items-center justify-center gap-2 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all cursor-pointer ${
         active
-          ? isWhatsApp
-            ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm"
-            : "bg-white dark:bg-zinc-800 text-blue-600 dark:text-white shadow-sm"
-          : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-400"
+          ? "bg-white dark:bg-slate-800 text-primary-btn shadow-sm"
+          : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
       }`}
     >
       {icon}

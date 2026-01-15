@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 export default async function LeadsPage() {
   const supabase = await createClient();
 
-  // FIX: meta_identities ko sath me fetch kar rahe hain (Join)
+  // Fetching leads with their meta identities (Join)
   const { data: initialLeads, error } = await supabase
     .from("leads")
     .select(`
@@ -21,12 +21,13 @@ export default async function LeadsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background transition-colors duration-300 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary-btn/5 blur-[100px] rounded-full -z-10" />
-      <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-emerald-500/5 blur-[100px] rounded-full -z-10" />
+    <div className="relative min-h-[calc(100vh-120px)] transition-colors duration-300">
+      
 
-      <div className="mx-auto lg:px-8 space-y-8">
-        <div className="relative">
+      <div className="mx-auto space-y-8 relative z-10">
+
+        {/* Main Content Area */}
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
           <LeadsList initialLeads={initialLeads || []} />
         </div>
       </div>

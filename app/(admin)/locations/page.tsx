@@ -12,40 +12,49 @@ export default async function LocationsPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden transition-colors duration-300">
-
-      {/* Background Decorative Glow - Adaptive */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 dark:bg-emerald-600/5 blur-[120px] rounded-full -z-10" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/10 dark:primary-btn/5 blur-[100px] rounded-full -z-10" />
+    <div className="min-h-screen bg-white dark:bg-slate-950 relative overflow-hidden transition-colors duration-300">
+      {/* Background Decorative Glow - Indigo Theme */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/10 dark:bg-primary-btn/5 blur-[120px] rounded-full -z-10" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-slate-200/20 dark:bg-indigo-900/5 blur-[100px] rounded-full -z-10" />
 
       <div className="max-w-6xl mx-auto p-6 md:p-12 space-y-12 relative z-10">
-
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-3">
             <div className="flex items-center gap-2 mb-2">
-              <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-600 dark:text-emerald-500 border border-emerald-500/20">
+              <div className="p-2 bg-indigo-500/10 rounded-xl text-primary-btn border border-indigo-500/20">
                 <Globe size={20} />
               </div>
-              <span className="text-[10px]  uppercase  text-gray-700 dark:text-zinc-500">
+              <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400">
                 Geofencing Active
               </span>
             </div>
-            <h1 className="text-4xl md:text-6xl  text-foreground er leading-none">
-              Region <span className="text-emerald-600 dark:text-emerald-500">Settings</span>
+            <h1 className="text-4xl md:text-6xl text-slate-900 dark:text-slate-50 font-semibold leading-none tracking-tight">
+              Region{" "}
+              <span className="text-primary-btn dark:text-indigo-500">
+                Settings
+              </span>
             </h1>
-            <p className="text-gray-500 dark:text-zinc-500 font-semibold max-w-lg leading-relaxed">
-              Define allowed service zones. Incoming leads will be auto-verified based on these locations.
+            <p className="text-slate-600 dark:text-slate-400 font-medium max-w-lg leading-relaxed">
+              Define allowed service zones. Incoming leads will be auto-verified
+              based on these locations.
             </p>
           </div>
 
-          <div className="flex bg-card dark:bg-zinc-900/40 backdrop-blur-xl border border-gray-200 dark:border-white/5 p-5 md:p-6 rounded-sm items-center gap-6 shadow-xl shadow-black/5">
+          <div className="flex bg-white dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-5 md:p-6 rounded-sm items-center gap-6 shadow-xl shadow-slate-200/50 dark:shadow-black/20">
             <div className="text-right">
-              <p className="text-[10px]  uppercase  text-gray-700 dark:text-zinc-500">Active Zones</p>
-              <p className="text-3xl  text-foreground">{locations?.length || 0}</p>
+              <p className="text-[10px] uppercase font-bold text-slate-500">
+                Active Zones
+              </p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-slate-50">
+                {locations?.length || 0}
+              </p>
             </div>
-            <div className="p-4 bg-gray-100 dark:bg-white/5 rounded-sm shadow-inner">
-              <MapPinned size={28} className="text-emerald-600 dark:text-emerald-500" />
+            <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-sm shadow-inner">
+              <MapPinned
+                size={28}
+                className="text-primary-btn dark:text-indigo-500"
+              />
             </div>
             {/* CSV Import Button */}
             <CsvImportButton />
@@ -60,26 +69,37 @@ export default async function LocationsPage() {
         {/* 2. Locations Table */}
         <div className="space-y-6">
           <div className="flex items-center gap-3 px-4">
-            <div className="p-1.5 bg-gray-100 dark:bg-white/5 rounded-lg">
-              <Settings2 size={16} className="text-gray-700 dark:text-zinc-600" />
+            <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
+              <Settings2
+                size={16}
+                className="text-slate-600 dark:text-slate-400"
+              />
             </div>
-            <h2 className="text-[11px]  uppercase  text-gray-700 dark:text-zinc-600">
+            <h2 className="text-[11px] uppercase font-bold tracking-widest text-slate-500">
               Live Zone Directory
             </h2>
           </div>
 
-          <div className="bg-card dark:bg-zinc-900/20 backdrop-blur-xl rounded-[2rem] md:rounded-sm border border-gray-200 dark:border-white/5 overflow-hidden shadow-2xl shadow-black/5">
+          <div className="bg-white dark:bg-slate-900/20 backdrop-blur-xl rounded-sm border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xl shadow-slate-200/20 dark:shadow-black/40">
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse min-w-[700px]">
                 <thead>
-                  <tr className="bg-gray-50 dark:bg-white/[0.02] border-b border-gray-200 dark:border-white/5">
-                    <th className="p-8 text-[11px]  text-gray-700 dark:text-zinc-400 uppercase ">City Name</th>
-                    <th className="p-8 text-[11px]  text-gray-700 dark:text-zinc-400 uppercase ">Zip Code</th>
-                    <th className="p-8 text-[11px]  text-gray-700 dark:text-zinc-400 uppercase  text-center">Serving Status</th>
-                    <th className="p-8 text-[11px]  text-gray-700 dark:text-zinc-400 uppercase  text-right">Actions</th>
+                  <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
+                    <th className="p-8 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      City Name
+                    </th>
+                    <th className="p-8 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Zip Code
+                    </th>
+                    <th className="p-8 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">
+                      Serving Status
+                    </th>
+                    <th className="p-8 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                   {locations && locations.length > 0 ? (
                     locations.map((loc) => (
                       <LocationRow key={loc.id} loc={loc} />
@@ -88,12 +108,20 @@ export default async function LocationsPage() {
                     <tr>
                       <td colSpan={4} className="p-24 text-center">
                         <div className="flex flex-col items-center gap-6">
-                          <div className="p-6 bg-gray-50 dark:bg-white/5 rounded-full border border-gray-100 dark:border-white/5">
-                            <MapPinned size={56} className="text-gray-200 dark:text-zinc-800" />
+                          <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-full border border-slate-100 dark:border-slate-800">
+                            <MapPinned
+                              size={56}
+                              className="text-slate-300 dark:text-slate-700"
+                            />
                           </div>
                           <div className="space-y-1">
-                            <p className="text-foreground  text-xl ">No active zones found</p>
-                            <p className="text-gray-700 dark:text-zinc-500 text-sm font-medium">Add your first service location to start verifying leads.</p>
+                            <p className="text-slate-900 dark:text-slate-100 text-xl font-semibold">
+                              No active zones found
+                            </p>
+                            <p className="text-slate-500 text-sm font-medium">
+                              Add your first service location to start verifying
+                              leads.
+                            </p>
                           </div>
                         </div>
                       </td>

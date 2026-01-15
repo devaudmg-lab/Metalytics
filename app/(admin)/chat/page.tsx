@@ -28,13 +28,13 @@ export default function ChatPage() {
             .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, () => fetchLeads())
             .subscribe();
         return () => { supabase.removeChannel(channel); };
-    }, [fetchLeads]);
+    }, [fetchLeads, supabase]);
 
     const selectedLead = useMemo(() => {
         return leads.find((l) => l.id === selectedLeadId) || null;
     }, [leads, selectedLeadId]);
 
-    // 2. Fetch Messages (Realtime logic remains same as it's table-based)
+    // 2. Fetch Messages (Realtime logic)
     useEffect(() => {
         if (!selectedLeadId) {
             setMessages([]);
@@ -66,28 +66,21 @@ export default function ChatPage() {
         if (!selectedLead) return;
 
         const identity = selectedLead.meta_identities;
-        const source = selectedLead.source; // 'messenger', 'whatsapp', or 'meta_ad'
+        const source = selectedLead.source;
 
-        let endpoint = "/api/chat/send"; // Default Messenger API
+        let endpoint = "/api/chat/send"; 
         let payload: any = { text, lead_id: selectedLeadId };
 
-        // Check if it's a WhatsApp lead
         if (source === "whatsapp" || (!identity?.messenger_psid && identity?.whatsapp_number)) {
             endpoint = "/api/chat/send-whatsapp";
             payload.recipient_wa_id = identity?.whatsapp_number;
-            payload.recipient_id = identity?.whatsapp_number; // Backup for safety
+            payload.recipient_id = identity?.whatsapp_number; 
         } else {
-            // It's a Messenger/Meta Ad lead
             if (!identity?.messenger_psid) {
-                alert("No Messenger PSID found for this lead.");
+                console.error("No Messenger PSID found.");
                 return;
             }
             payload.recipient_id = identity.messenger_psid;
-        }
-
-        if (!payload.recipient_id && !payload.recipient_wa_id) {
-            alert("Contact ID not found.");
-            return;
         }
 
         try {
@@ -96,18 +89,20 @@ export default function ChatPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
-            const result = await response.json();
-            if (!response.ok) alert(`Error: ${result.error}`);
+            if (!response.ok) {
+                const result = await response.json();
+                console.error(`Error: ${result.error}`);
+            }
         } catch (err) { 
-            alert("Network error. Please check your connection."); 
+            console.error("Network error sending message."); 
         }
     };
 
     return (
-        <div className="flex h-[calc(100vh-80px)] md:h-[calc(100vh-120px)] w-full border-gray-200 dark:border-white/5 md:rounded-sm overflow-hidden shadow-xl bg-white dark:bg-black">
+        <div className="flex h-[calc(100vh-80px)] md:h-[calc(100vh-120px)] w-full border border-slate-200 dark:border-slate-800 md:rounded-xl overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-black/40 bg-white dark:bg-slate-950 transition-colors duration-300">
             
-            {/* Sidebar */}
-            <div className={`${selectedLeadId ? 'hidden md:flex' : 'flex'} w-full md:w-[350px] lg:w-[400px] border-r border-gray-200 dark:border-white/5`}>
+            {/* Sidebar - Integrated with Slate Theme */}
+            <div className={`${selectedLeadId ? 'hidden md:flex' : 'flex'} w-full md:w-[350px] lg:w-[400px] border-r border-slate-200 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/10`}>
                 <ChatSidebar
                     leads={leads}
                     selectedLeadId={selectedLeadId}
@@ -117,15 +112,14 @@ export default function ChatPage() {
                 />
             </div>
 
-            {/* Chat Window */}
-            <div className={`${selectedLeadId ? 'flex' : 'hidden md:flex'} flex-1`}>
+            {/* Chat Window - Integrated with Indigo Accents */}
+            <div className={`${selectedLeadId ? 'flex' : 'hidden md:flex'} flex-1 bg-white dark:bg-slate-950`}>
                 <ChatWindow
                     lead={selectedLead}
                     messages={messages}
                     onSendMessage={handleSendMessage}
                     isLoading={isLoadingMessages}
                     onBack={() => setSelectedLeadId(null)} 
-                    // Yahan aap source bhi pass kar sakte hain taaki UI mein icon dikhe
                     platform={selectedLead?.source}
                 />
             </div>

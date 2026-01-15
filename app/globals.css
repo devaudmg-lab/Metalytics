@@ -3,34 +3,58 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  
+  /* Original Colors */
   --background: #f8f0f0;
   --foreground: #171717;
   --card: #ffffffda;
   --toggle-bg: #e1edf7;
   --button-primary: #0a78be;
   --border: #e2e8f0;
-  --font-Arial:"Arial";
-  --tx-black:#101828;
+  --tx-black: #101828;
+  
+  /* Added Palette Extensions for Depth */
+  --button-hover: #0866a3;
+  --card-foreground: #334155;
+  --muted: #64748b;
+  --muted-foreground: #94a3b8;
+  --accent: #f1f5f9;
+  --ring: #0a78be;
+  
+  /* Font */
+  --font-Arial: "Arial", ui-sans-serif, system-ui;
 }
 
 .dark {
+  /* Original Colors */
   --background: #030712;
   --foreground: #ededed;
   --card: #101828;
   --toggle-bg: #101828;
   --button-primary: #432dd7;
-  --border: #101828;
+  --border: #1e293b; /* Slightly lightened for visibility against #030712 */
+  
+  /* Added Palette Extensions for Depth */
+  --button-hover: #5845eb;
+  --card-foreground: #cbd5e1;
+  --muted: #94a3b8;
+  --muted-foreground: #64748b;
+  --accent: #1e293b;
+  --ring: #432dd7;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
   --color-toggle: var(--toggle-bg);
   --color-primary-btn: var(--button-primary);
+  --color-primary-hover: var(--button-hover);
   --color-border-custom: var(--border);
-  --color-tx-black:var(--tx-black);
+  --color-tx-black: var(--tx-black);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
   
   --font-sans: var(--font-Arial);
   --font-mono: "JetBrains Mono", "Geist Mono", monospace;
@@ -42,40 +66,37 @@
   }
 }
 
-body {
-
-      min-height: 100vh;
-  background:
-    radial-gradient(at top left,     #faf1f1 0%, transparent 70%),
-    radial-gradient(at top right,    #faf1f1 0%, transparent 70%),
-    radial-gradient(at bottom left,  #e5f0fa 0%, transparent 70%),
-    radial-gradient(at bottom right, #e9f6ee 0%, transparent 70%);
+html {
+  min-height: 100vh;
+  /* Refined Gradients: Using transparency to let base background color show through */
+  background: 
+    radial-gradient(at top left, color-mix(in srgb, var(--button-primary), transparent 92%), transparent 70%),
+    radial-gradient(at bottom right, color-mix(in srgb, var(--button-primary), transparent 95%), transparent 70%),
+    var(--background);
   color: var(--foreground);
-  font-family: var(--font-Arial);
+  font-family: var(--font-sans);
   transition: background-color 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4, h5, h6, button, input, textarea, select {
-  font-family: var(--font-Arial);
-}
+/* Typography Scale */
+h1, h2, h3 { color: var(--tx-black); font-weight: 700; }
+.dark h1, .dark h2, .dark h3 { color: var(--foreground); }
 
 @layer utilities {
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+  .glass {
+    @apply backdrop-blur-md bg-card border border-border-custom;
+  }
+  
+  .btn-primary {
+    @apply bg-primary-btn text-white px-4 py-2 rounded-lg transition-colors hover:bg-primary-hover active:scale-95;
   }
 
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
+  .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: var(--border);
     border-radius: 20px;
   }
-
-  .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-    background: var(--button-primary);
-  }
+  .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: var(--button-primary); }
 }
