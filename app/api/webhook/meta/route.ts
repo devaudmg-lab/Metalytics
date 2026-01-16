@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
           await supabase.from("meta_identities").insert([{ lead_id: leadId, whatsapp_number: waId }]);
         }
 
-        // Save Message with correct metadata
+        // Save Message with metadata
         await supabase.from("lead_messages").insert([{
           lead_id: leadId,
           sender: "user",
