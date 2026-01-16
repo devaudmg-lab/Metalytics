@@ -51,27 +51,33 @@ export default function LeadsList({ initialLeads }: { initialLeads: any[] }) {
     };
   }, [supabase]);
 
-  const displayData = useMemo(() => {
-    return leads.filter((lead) => {
-      const matchesMode = filterMode === "all" ? true : lead.is_filtered;
-      const searchLower = searchQuery.toLowerCase();
-      
-      const matchesSearch =
-        lead.full_name?.toLowerCase().includes(searchLower) ||
-        lead.email?.toLowerCase().includes(searchLower) ||
-        lead.phone?.includes(searchQuery) ||
-        lead.city?.toLowerCase().includes(searchLower);
-      
-      const d = new Date(lead.created_at);
-      const leadLocalDate = d.toISOString().split('T')[0];
+const displayData = useMemo(() => {
+  return leads.filter((lead) => {
+    // 1. Mode & Search (Same as before)
+    const matchesMode = filterMode === "all" ? true : lead.is_filtered;
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch =
+      lead.full_name?.toLowerCase().includes(searchLower) ||
+      lead.phone?.includes(searchQuery);
 
-      const matchesDate =
-        (startDate ? leadLocalDate >= startDate : true) &&
-        (endDate ? leadLocalDate <= endDate : true);
-      
-      return matchesMode && matchesSearch && matchesDate;
-    });
-  }, [leads, filterMode, searchQuery, startDate, endDate]);
+    // 2. Date Logic - Forced to Victoria/Melbourne Time
+    let matchesDate = true;
+    if (startDate || endDate) {
+      const d = new Date(lead.created_at);
+
+      // 'en-CA' use karne se format "YYYY-MM-DD" milta hai jo hamare startDate se match hota hai
+      const vicDateString = d.toLocaleDateString("en-CA", {
+        timeZone: "Asia/Kolkata", 
+      });
+
+      matchesDate =
+        (startDate ? vicDateString >= startDate : true) &&
+        (endDate ? vicDateString <= endDate : true);
+    }
+
+    return matchesMode && matchesSearch && matchesDate;
+  });
+}, [leads, filterMode, searchQuery, startDate, endDate]);
 
   const handleSaveNote = async (id: string, text: string) => {
     setSavingId(id);
