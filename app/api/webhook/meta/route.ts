@@ -3,7 +3,11 @@ import { createClient } from "@supabase/supabase-js"; // Direct import for Admin
 import { createHmac, timingSafeEqual } from "crypto";
 
 // --- 1. Helper: Media Handler (Meta to Supabase Storage) ---
-async function processMedia(mediaId: string, mimeType: string, supabaseAdmin: any) {
+async function processMedia(
+  mediaId: string,
+  mimeType: string,
+  supabaseAdmin: any
+) {
   try {
     const waToken = process.env.META_ACCESS_TOKEN;
 
@@ -30,9 +34,9 @@ async function processMedia(mediaId: string, mimeType: string, supabaseAdmin: an
     if (uploadError) throw uploadError;
 
     // D. Get Public URL
-    const { data: { publicUrl } } = supabaseAdmin.storage
-      .from("chat-media")
-      .getPublicUrl(fileName);
+    const {
+      data: { publicUrl },
+    } = supabaseAdmin.storage.from("chat-media").getPublicUrl(fileName);
 
     return publicUrl;
   } catch (error) {
@@ -53,8 +57,10 @@ function verifySignature(payload: string, signature: string | null) {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  if (searchParams.get("hub.mode") === "subscribe" && 
-      searchParams.get("hub.verify_token") === process.env.META_VERIFY_TOKEN) {
+  if (
+    searchParams.get("hub.mode") === "subscribe" &&
+    searchParams.get("hub.verify_token") === process.env.META_VERIFY_TOKEN
+  ) {
     return new NextResponse(searchParams.get("hub.challenge"), { status: 200 });
   }
   return new NextResponse("Forbidden", { status: 403 });
@@ -98,52 +104,97 @@ export async function POST(req: NextRequest) {
         if (!messageText) messageText = `Sent a ${mediaType}`;
       }
 
-      let { data: identity } = await supabaseAdmin.from("meta_identities").select("lead_id").eq("messenger_psid", psid).maybeSingle();
+      const { data: identity } = await supabaseAdmin
+        .from("meta_identities")
+        .select("lead_id")
+        .eq("messenger_psid", psid)
+        .maybeSingle();
       let leadId = identity?.lead_id;
 
       if (!leadId) {
         const token = process.env.META_PAGE_ACCESS_TOKEN;
-        const res = await fetch(`https://graph.facebook.com/v24.0/${psid}?fields=first_name,last_name&access_token=${token}`);
+        const res = await fetch(
+          `https://graph.facebook.com/v24.0/${psid}?fields=first_name,last_name&access_token=${token}`
+        );
         const profile = await res.json();
-        const fullName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Messenger User";
+        const fullName =
+          `${profile.first_name || ""} ${profile.last_name || ""}`.trim() ||
+          "Messenger User";
 
-        const { data: newLead } = await supabaseAdmin.from("leads").insert([{ full_name: fullName, source: "messenger" }]).select("id").single();
+        const { data: newLead } = await supabaseAdmin
+          .from("leads")
+          .insert([{ full_name: fullName, source: "messenger" }])
+          .select("id")
+          .single();
         leadId = newLead?.id;
-        await supabaseAdmin.from("meta_identities").insert([{ lead_id: leadId, messenger_psid: psid, raw_metadata: profile }]);
+        await supabaseAdmin
+          .from("meta_identities")
+          .insert([
+            { lead_id: leadId, messenger_psid: psid, raw_metadata: profile },
+          ]);
       }
 
-      await supabaseAdmin.from("lead_messages").insert([{
-        lead_id: leadId,
-        sender: isEcho ? "page" : "user",
-        message_text: messageText,
-        direction: isEcho ? 'outbound' : 'inbound',
-        status: 'delivered',
-        metadata: { media_url: mediaUrl, type: mediaType }
-      }]);
-      
-      if (!isEcho) await supabaseAdmin.from("leads").update({ last_interaction_at: new Date().toISOString() }).eq("id", leadId);
+      await supabaseAdmin.from("lead_messages").insert([
+        {
+          lead_id: leadId,
+          sender: isEcho ? "page" : "user",
+          message_text: messageText,
+          direction: isEcho ? "outbound" : "inbound",
+          status: "delivered",
+          metadata: { media_url: mediaUrl, type: mediaType },
+        },
+      ]);
+
+      if (!isEcho)
+        await supabaseAdmin
+          .from("leads")
+          .update({ last_interaction_at: new Date().toISOString() })
+          .eq("id", leadId);
     }
 
     // --- PART B: META LEAD ADS ---
     else if (entry?.changes?.[0]?.value?.leadgen_id) {
       const leadgenId = entry.changes[0].value.leadgen_id;
-      const { data: existing } = await supabaseAdmin.from("meta_identities").select("lead_id").eq("meta_lead_id", leadgenId).maybeSingle();
+      const { data: existing } = await supabaseAdmin
+        .from("meta_identities")
+        .select("lead_id")
+        .eq("meta_lead_id", leadgenId)
+        .maybeSingle();
 
       if (!existing) {
         const token = process.env.META_PAGE_ACCESS_TOKEN;
-        const res = await fetch(`https://graph.facebook.com/v24.0/${leadgenId}?access_token=${token}`);
+        const res = await fetch(
+          `https://graph.facebook.com/v24.0/${leadgenId}?access_token=${token}`
+        );
         const details = await res.json();
-        const findField = (names: string[]) => details.field_data?.find((f: any) => names.includes(f.name.toLowerCase()))?.values?.[0] || "";
-        
-        const { data: lead } = await supabaseAdmin.from("leads").insert([{
-          full_name: findField(["full_name", "name"]),
-          email: findField(["email"]),
-          phone: findField(["phone_number", "phone"]),
-          postal_code:findField(["post_code","zip"]),
-          source: "meta_ad"
-        }]).select("id").single();
+        const findField = (names: string[]) =>
+          details.field_data?.find((f: any) =>
+            names.includes(f.name.toLowerCase())
+          )?.values?.[0] || "";
 
-        await supabaseAdmin.from("meta_identities").insert([{ lead_id: lead?.id, meta_lead_id: leadgenId, raw_metadata: details }]);
+        const { data: lead } = await supabaseAdmin
+          .from("leads")
+          .insert([
+            {
+              full_name: findField(["full_name", "name"]),
+              email: findField(["email"]),
+              phone: findField(["phone_number", "phone"]),
+              postal_code: findField(["post_code", "zip"]),
+              source: "meta_ad",
+            },
+          ])
+          .select("id")
+          .single();
+
+        await supabaseAdmin
+          .from("meta_identities")
+          .insert([
+            {
+              lead_id: lead?.id,
+              meta_lead_id: leadgenId,
+              raw_metadata: details,
+            },
+          ]);
       }
     }
 
@@ -151,8 +202,33 @@ export async function POST(req: NextRequest) {
     else if (entry?.changes?.[0]?.value) {
       const value = entry.changes[0].value;
 
+      console.log(value);
+      
+
+      // 1. HANDLE STATUS UPDATES (Sent -> Delivered -> Read)
       if (value.statuses?.[0]) {
-        await supabaseAdmin.from("lead_messages").update({ status: value.statuses[0].status }).eq("wa_message_id", value.statuses[0].id);
+        const statusUpdate = value.statuses[0];
+        const waMessageId = statusUpdate.id;
+        const newStatus = statusUpdate.status; // 'delivered', 'read', 'failed', 'sent'
+        console.log(newStatus);
+        
+
+        // Update the message status based on the WhatsApp ID
+        const { error: updateError } = await supabaseAdmin
+          .from("lead_messages")
+          .update({
+            status: newStatus,
+            // Optional: you can store the timestamp of the status change in metadata
+            metadata: {
+              last_status_update: new Date().toISOString(),
+              whatsapp_status_raw: newStatus,
+            },
+          })
+          .eq("wa_message_id", waMessageId);
+
+        if (updateError) console.error("Error updating status:", updateError);
+
+        return NextResponse.json({ success: true });
       }
 
       if (value.messages?.[0]) {
@@ -165,30 +241,50 @@ export async function POST(req: NextRequest) {
         if (["image", "video", "document", "audio"].includes(msgType)) {
           const mediaData = message[msgType];
           messageText = mediaData.caption || `Sent a ${msgType}`;
-          mediaUrl = await processMedia(mediaData.id, mediaData.mime_type, supabaseAdmin);
+          mediaUrl = await processMedia(
+            mediaData.id,
+            mediaData.mime_type,
+            supabaseAdmin
+          );
         }
 
-        let { data: identity } = await supabaseAdmin.from("meta_identities").select("lead_id").eq("whatsapp_number", waId).maybeSingle();
+        const { data: identity } = await supabaseAdmin
+          .from("meta_identities")
+          .select("lead_id")
+          .eq("whatsapp_number", waId)
+          .maybeSingle();
         let leadId = identity?.lead_id;
 
         if (!leadId) {
-          const userName = value.contacts?.[0]?.profile?.name || "WhatsApp User";
-          const { data: newLead } = await supabaseAdmin.from("leads").insert([{ full_name: userName, source: "whatsapp" }]).select("id").single();
+          const userName =
+            value.contacts?.[0]?.profile?.name || "WhatsApp User";
+          const { data: newLead } = await supabaseAdmin
+            .from("leads")
+            .insert([{ full_name: userName, source: "whatsapp" }])
+            .select("id")
+            .single();
           leadId = newLead?.id;
-          await supabaseAdmin.from("meta_identities").insert([{ lead_id: leadId, whatsapp_number: waId }]);
+          await supabaseAdmin
+            .from("meta_identities")
+            .insert([{ lead_id: leadId, whatsapp_number: waId }]);
         }
 
-        await supabaseAdmin.from("lead_messages").insert([{
-          lead_id: leadId,
-          sender: "user",
-          message_text: messageText,
-          wa_message_id: message.id,
-          direction: "inbound",
-          status: "delivered",
-          metadata: { media_url: mediaUrl, type: msgType }
-        }]);
-        
-        await supabaseAdmin.from("leads").update({ last_interaction_at: new Date().toISOString() }).eq("id", leadId);
+        await supabaseAdmin.from("lead_messages").insert([
+          {
+            lead_id: leadId,
+            sender: "user",
+            message_text: messageText,
+            wa_message_id: message.id,
+            direction: "inbound",
+            status: "delivered",
+            metadata: { media_url: mediaUrl, type: msgType },
+          },
+        ]);
+
+        await supabaseAdmin
+          .from("leads")
+          .update({ last_interaction_at: new Date().toISOString() })
+          .eq("id", leadId);
       }
     }
 
