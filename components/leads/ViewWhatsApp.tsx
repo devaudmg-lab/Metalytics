@@ -178,7 +178,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                   <div className="flex justify-between items-start">
                     <p
                       className={`text-sm md:text-lg font-semibold truncate ${
-                        selectedId === lead.id
+                        selectedId === lead.id  
                           ? "text-primary-btn"
                           : "text-slate-900 dark:text-slate-100"
                       }`}

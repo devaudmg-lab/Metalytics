@@ -17,11 +17,17 @@ export default function LocationRow({ loc }: { loc: any }) {
 
   const handleToggle = async () => {
     setLoading(true);
-    await supabase
+    // Use the functional update to ensure we have the latest state
+    const { error } = await supabase
       .from("allowed_locations")
       .update({ is_serving: !loc.is_serving })
       .eq("id", loc.id);
-    router.refresh();
+
+    if (error) {
+      alert("Failed to update status");
+    } else {
+      router.refresh();
+    }
     setLoading(false);
   };
 
@@ -33,16 +39,27 @@ export default function LocationRow({ loc }: { loc: any }) {
   };
 
   const handleUpdate = async () => {
+    // Basic validation
+    if (!editData.city.trim() || !editData.zip.trim()) {
+      alert("City and Zip are required");
+      return;
+    }
+
     setLoading(true);
-    await supabase
+    const { error } = await supabase
       .from("allowed_locations")
       .update({
         city_name: editData.city,
         postal_code: editData.zip,
       })
       .eq("id", loc.id);
-    setIsEditing(false);
-    router.refresh();
+
+    if (error) {
+      alert(error.message);
+    } else {
+      setIsEditing(false);
+      router.refresh();
+    }
     setLoading(false);
   };
 
@@ -154,7 +171,11 @@ export default function LocationRow({ loc }: { loc: any }) {
                 <Check size={18} />
               </button>
               <button
-                onClick={() => setIsEditing(false)}
+                onClick={() => {
+                  setIsEditing(false);
+                  // Reset to the original data from props
+                  setEditData({ city: loc.city_name, zip: loc.postal_code });
+                }}
                 className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
               >
                 <X size={18} />
