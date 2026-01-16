@@ -13,7 +13,7 @@ export default function ChatPage() {
   const [activeTab, setActiveTab] = useState<ChatTab>("all");
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
-  // 1. Fetch leads with both Messenger and WhatsApp identities
+  // 1. Fetch leads
   const fetchLeads = useCallback(async () => {
     const { data } = await supabase
       .from("leads")
@@ -41,8 +41,7 @@ export default function ChatPage() {
     return leads.find((l) => l.id === selectedLeadId) || null;
   }, [leads, selectedLeadId]);
 
-  // 2. Fetch Messages (Realtime logic)
-  // 2. Fetch Messages (Updated for Realtime Status Updates)
+  // 2. Fetch Messages & Realtime Listener with Deduplication
   useEffect(() => {
     if (!selectedLeadId) {
       setMessages([]);
@@ -62,7 +61,6 @@ export default function ChatPage() {
 
     fetchMessages();
 
-    // Change event from "INSERT" to "*" to catch status updates (ticks)
     const channel = supabase
       .channel(`chat_messages_${selectedLeadId}`)
       .on(
@@ -75,9 +73,26 @@ export default function ChatPage() {
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
-            setMessages((prev) => [...prev, payload.new]);
+            setMessages((prev) => {
+              // Check if we have an optimistic message matching this new DB record
+              // We check by text content and the 'is_optimistic' flag
+              const optimisticIdx = prev.findLastIndex(
+                (m) =>
+                  m.metadata?.is_optimistic === true &&
+                  m.message_text === payload.new.message_text
+              );
+
+              if (optimisticIdx !== -1) {
+                // SWAP: Replace the optimistic message with the real one from DB
+                const updated = [...prev];
+                updated[optimisticIdx] = payload.new;
+                return updated;
+              }
+
+              // If no optimistic match, just add as a new message (e.g., incoming message)
+              return [...prev, payload.new];
+            });
           } else if (payload.eventType === "UPDATE") {
-            // This updates the specific message when the 'status' changes
             setMessages((prev) =>
               prev.map((msg) => (msg.id === payload.new.id ? payload.new : msg))
             );
@@ -91,34 +106,32 @@ export default function ChatPage() {
     };
   }, [selectedLeadId, supabase]);
 
-  // 3. Smart Send Message Handler (WhatsApp vs Messenger)
-  // 3. Smart Send Message Handler (Updated for Media Support)
+  // 3. Smart Send Message Handler
   const handleSendMessage = async (text: string, mediaUrl?: string) => {
     if (!selectedLead || !selectedLeadId) return;
 
     const identity = selectedLead.meta_identities;
     const source = selectedLead.source;
-    const tempId = crypto.randomUUID(); // Unique ID for optimistic UI
+    const tempId = crypto.randomUUID();
 
-    // 1. OPTIMISTIC UPDATE
-    // We add the message to the state immediately so the UI feels "snappy"
+    // --- OPTIMISTIC UPDATE ---
     const optimisticMessage = {
       id: tempId,
       lead_id: selectedLeadId,
       sender: "page",
       message_text: text,
       direction: "outbound",
-      status: "sent", // Shows the first grey tick instantly
+      status: "sent",
       created_at: new Date().toISOString(),
       metadata: {
         media_url: mediaUrl,
-        is_optimistic: true,
+        is_optimistic: true, // This flag allows the listener to identify it
       },
     };
 
     setMessages((prev) => [...prev, optimisticMessage]);
 
-    // 2. PREPARE API CALL
+    // PREPARE API CALL
     let endpoint = "/api/chat/send";
     const payload: any = {
       text,
@@ -126,25 +139,17 @@ export default function ChatPage() {
       media_url: mediaUrl,
     };
 
-    // Route logic based on Lead Source
-    if (
-      source === "whatsapp" ||
-      (!identity?.messenger_psid && identity?.whatsapp_number)
-    ) {
+    if (source === "whatsapp" || (!identity?.messenger_psid && identity?.whatsapp_number)) {
       endpoint = "/api/chat/send-whatsapp";
       payload.recipient_wa_id = identity?.whatsapp_number;
-      payload.recipient_id = identity?.whatsapp_number;
     } else {
       if (!identity?.messenger_psid) {
-        console.error("No Messenger PSID found.");
-        // Remove optimistic message if we can't send
         setMessages((prev) => prev.filter((m) => m.id !== tempId));
         return;
       }
       payload.recipient_id = identity.messenger_psid;
     }
 
-    // 3. EXECUTE SEND
     try {
       const response = await fetch(endpoint, {
         method: "POST",
@@ -154,29 +159,17 @@ export default function ChatPage() {
 
       if (!response.ok) {
         const result = await response.json();
-        console.error(`API Error: ${result.error}`);
-
-        // Remove the optimistic message from UI since it failed to send
         setMessages((prev) => prev.filter((m) => m.id !== tempId));
-        alert(`Failed to send: ${result.error || "Unknown error"}`);
+        alert(`Failed: ${result.error}`);
       }
-      // Note: We don't need to manually update the state on success because
-      // your Realtime listener will handle the "INSERT" from the database.
-      // We can filter out the optimistic message once the real one arrives.
     } catch (err) {
-      console.error("Network error sending message.", err);
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
     }
   };
 
   return (
     <div className="flex h-[calc(100vh-80px)] md:h-[calc(100vh-120px)] w-full border border-slate-200 dark:border-slate-800 md:rounded-xl overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-black/40 bg-white dark:bg-slate-950 transition-colors duration-300">
-      {/* Sidebar - Integrated with Slate Theme */}
-      <div
-        className={`${
-          selectedLeadId ? "hidden md:flex" : "flex"
-        } w-full md:w-[350px] lg:w-[400px] border-r border-slate-200 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/10`}
-      >
+      <div className={`${selectedLeadId ? "hidden md:flex" : "flex"} w-full md:w-[350px] lg:w-[400px] border-r border-slate-200 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/10`}>
         <ChatSidebar
           leads={leads}
           selectedLeadId={selectedLeadId}
@@ -186,12 +179,7 @@ export default function ChatPage() {
         />
       </div>
 
-      {/* Chat Window - Integrated with Indigo Accents */}
-      <div
-        className={`${
-          selectedLeadId ? "flex" : "hidden md:flex"
-        } flex-1 bg-white dark:bg-slate-950`}
-      >
+      <div className={`${selectedLeadId ? "flex" : "hidden md:flex"} flex-1 bg-white dark:bg-slate-950`}>
         <ChatWindow
           lead={selectedLead}
           messages={messages}
