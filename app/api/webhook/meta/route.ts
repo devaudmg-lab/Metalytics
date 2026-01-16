@@ -139,6 +139,7 @@ export async function POST(req: NextRequest) {
           full_name: findField(["full_name", "name"]),
           email: findField(["email"]),
           phone: findField(["phone_number", "phone"]),
+          postal_code:findField(["post_code","zip"]),
           source: "meta_ad"
         }]).select("id").single();
 
