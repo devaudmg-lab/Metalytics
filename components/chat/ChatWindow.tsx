@@ -140,7 +140,6 @@ export default function ChatWindow({
   };
 
   const MessageStatus = ({ status }: { status: string }) => {
-    console.log(status);
     
     switch (status) {
       case "sent":

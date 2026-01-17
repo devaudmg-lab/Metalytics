@@ -17,14 +17,13 @@ import {
   Copy,
   Check,
   PencilIcon,
+  Map as MapIcon, // Naya icon navigation ke liye
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import AddLocationForm from "../locations/AddLocationForm";
 import { formatDate } from "date-fns";
 
 export default function ViewWhatsApp({ data, onSave, savingId }: any) {
-  const supabase = createClient();
-
   // --- FILTER: Sirf Meta Ad leads ---
   const adLeadsOnly = useMemo(() => {
     return data?.filter((lead: any) => lead.source === "meta_ad") || [];
@@ -38,6 +37,9 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeLeadData, setActiveLeadData] = useState({ city: "", zip: "" });
   const [copied, setCopied] = useState(false);
+
+  // --- NEW: Navigation State ---
+  const [activeTab, setActiveTab] = useState<"notes" | "map">("notes");
 
   useEffect(() => {
     if (!selectedId && adLeadsOnly.length > 0) {
@@ -178,7 +180,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                   <div className="flex justify-between items-start">
                     <p
                       className={`text-sm md:text-lg font-semibold truncate ${
-                        selectedId === lead.id  
+                        selectedId === lead.id
                           ? "text-primary-btn"
                           : "text-slate-900 dark:text-slate-100"
                       }`}
@@ -297,27 +299,72 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
                 </button>
               </header>
 
-              <div className="p-6 md:p-10 flex-1">
-                <div className="max-w-3xl space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-bold text-xs uppercase text-slate-500 tracking-widest">
-                      <StickyNote size={16} className="text-indigo-500" /> Lead
-                      Observations
-                    </div>
-                    {savingId === selectedLead.id && (
-                      <div className="flex items-center gap-2 text-indigo-500 text-xs font-bold animate-pulse">
-                        <Loader2 size={14} className="animate-spin" /> Saving...
-                      </div>
+              <div className="p-6 md:p-10 flex-1 flex flex-col">
+                {/* --- NAVIGATION TAB BAR --- */}
+                <div className="flex items-center gap-8 border-b border-slate-100 dark:border-slate-800 mb-8">
+                  <button
+                    onClick={() => setActiveTab("notes")}
+                    className={`pb-4 text-xs font-bold uppercase tracking-widest transition-all relative cursor-pointer ${
+                      activeTab === "notes"
+                        ? "text-primary-btn"
+                        : "text-slate-400 hover:text-slate-600"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <StickyNote size={14} /> Notes
+                    </span>
+                    {activeTab === "notes" && (
+                      <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-btn" />
                     )}
-                  </div>
-                  <textarea
-                    key={selectedLead.id}
-                    className="w-full h-64 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-sm p-8 text-lg outline-none focus:border-indigo-500/40 focus:ring-4 focus:ring-indigo-500/5 transition-all resize-none shadow-sm dark:text-slate-200"
-                    placeholder="Add private notes about this prospect..."
-                    defaultValue={selectedLead.notes || ""}
-                    onBlur={(e) => onSave(selectedLead.id, e.target.value)}
-                  />
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("map")}
+                    className={`pb-4 text-xs font-bold uppercase tracking-widest transition-all relative cursor-pointer ${
+                      activeTab === "map"
+                        ? "text-primary-btn"
+                        : "text-slate-400 hover:text-slate-600"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <MapIcon size={14} /> Service Map
+                    </span>
+                    {activeTab === "map" && (
+                      <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-btn" />
+                    )}
+                  </button>
                 </div>
+
+                {/* --- TAB CONTENT --- */}
+                <div className="flex-1">
+                  {activeTab === "notes" ? (
+                    <div className="max-w-3xl space-y-6 animate-in fade-in duration-300">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 font-bold text-xs uppercase text-slate-500 tracking-widest">
+                          <StickyNote size={16} className="text-indigo-500" />{" "}
+                          Lead Observations
+                        </div>
+                        {savingId === selectedLead.id && (
+                          <div className="flex items-center gap-2 text-indigo-500 text-xs font-bold animate-pulse">
+                            <Loader2 size={14} className="animate-spin" />{" "}
+                            Saving...
+                          </div>
+                        )}
+                      </div>
+                      <textarea
+                        key={selectedLead.id}
+                        className="w-full h-64 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-sm p-8 text-lg outline-none focus:border-indigo-500/40 focus:ring-4 focus:ring-indigo-500/5 transition-all resize-none shadow-sm dark:text-slate-200"
+                        placeholder="Add private notes about this prospect..."
+                        defaultValue={selectedLead.notes || ""}
+                        onBlur={(e) => onSave(selectedLead.id, e.target.value)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-full w-full max-w-4xl animate-in slide-in-from-bottom-2 duration-300">
+                      <LeadMap postalCode={selectedLead.postal_code} />
+                    </div>
+                  )}
+                </div>
+
                 <div className="lg:hidden mt-12 border-t border-slate-100 dark:border-slate-800 pt-10">
                   <IntelligenceContent
                     selectedLead={selectedLead}
@@ -342,6 +389,47 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
             getRawData={getRawData}
           />
         </aside>
+      </div>
+    </div>
+  );
+}
+
+// --- NEW COMPONENT: GOOGLE MAPS EMBED ---
+function LeadMap({ postalCode }: { postalCode: string }) {
+  if (!postalCode) {
+    return (
+      <div className="h-96 w-full flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-sm bg-slate-50/50">
+        <MapPinned size={48} className="text-slate-300 mb-4" />
+        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
+          Postal Code Not Available
+        </p>
+      </div>
+    );
+  }
+
+  // Melbourne, Australia focus with the lead's postal code
+  const locationQuery = encodeURIComponent(`${postalCode}, Melbourne, VIC, Australia`);
+  const mapUrl = `https://www.google.com/maps?q=${locationQuery}&output=embed&z=13`;
+
+  return (
+    <div className="space-y-4 h-full flex flex-col">
+      <div className="flex items-center gap-2 font-bold text-xs uppercase text-slate-500 tracking-widest">
+        <MapPinned size={16} className="text-indigo-500" /> Service Location
+        Intelligence
+      </div>
+      <div className="flex-1 min-h-[350px] border border-slate-200 dark:border-slate-800 rounded-sm overflow-hidden relative group ">
+        <iframe
+          src={mapUrl}
+          width="100%"
+          height="100%"
+          style={{ border: 0 }}
+          allowFullScreen
+          loading="lazy"
+          className=" grayscale-[0.2] contrast-[1.1] brightness-[0.95] dark:invert dark:hue-rotate-180 dark:brightness-75"
+        ></iframe>
+        <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 px-3 py-1.5 rounded-sm border border-slate-200 dark:border-slate-800 shadow-sm text-[10px] font-bold uppercase tracking-tighter">
+          Melbourne, VIC {postalCode}
+        </div>
       </div>
     </div>
   );
