@@ -33,7 +33,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
   }, [data]);
 
   const [selectedId, setSelectedId] = useState<string | null>(
-    adLeadsOnly[0]?.id || null
+    adLeadsOnly[0]?.id || null,
   );
   const [searchTerm, setSearchTerm] = useState("");
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
@@ -41,7 +41,7 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
   const [activeLeadData, setActiveLeadData] = useState({ city: "", zip: "" });
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<"notes" | "map">("notes");
-  
+
   // --- NEW: Global Map State ---
   const [showGlobalMap, setShowGlobalMap] = useState(false);
 
@@ -56,30 +56,30 @@ export default function ViewWhatsApp({ data, onSave, savingId }: any) {
       (lead: any) =>
         lead.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.phone?.includes(searchTerm)
+        lead.phone?.includes(searchTerm),
     );
   }, [adLeadsOnly, searchTerm]);
 
   const selectedLead = adLeadsOnly.find((l: any) => l.id === selectedId);
 
   // --- NEW: Logic to get all unique postal codes for the global map ---
-const globalPostalQuery = useMemo(() => {
-  // Count frequency of each postal code
-  const counts = data.reduce((acc: any, lead: any) => {
-    if (lead.postal_code) {
-      acc[lead.postal_code] = (acc[lead.postal_code] || 0) + 1;
-    }
-    return acc;
-  }, {});
+  const globalPostalQuery = useMemo(() => {
+    // Count frequency of each postal code
+    const counts = data.reduce((acc: any, lead: any) => {
+      if (lead.postal_code) {
+        acc[lead.postal_code] = (acc[lead.postal_code] || 0) + 1;
+      }
+      return acc;
+    }, {});
 
-  // Sort by most frequent and take top 10
-  const topCodes = Object.keys(counts)
-    .sort((a, b) => counts[b] - counts[a])
-    .slice(0, 7);
+    // Sort by most frequent and take top 10
+    const topCodes = Object.keys(counts)
+      .sort((a, b) => counts[b] - counts[a])
+      .slice(0, 7);
 
-  // Format with "postcode" prefix for better boundary recognition
-  return topCodes.map(code => `area+${code}`).join(",");
-}, [data]);
+    // Format with "postcode" prefix for better boundary recognition
+    return topCodes.map((code) => `area+${code}`).join(",");
+  }, [data]);
 
   const getRawData = (lead: any) => {
     if (!lead) return null;
@@ -111,7 +111,7 @@ const globalPostalQuery = useMemo(() => {
       raw?.field_data?.find(
         (f: any) =>
           f.name.toLowerCase().includes("zip") ||
-          f.name.toLowerCase().includes("post_code")
+          f.name.toLowerCase().includes("post_code"),
       )?.values?.[0] || "";
 
     setActiveLeadData({ city, zip });
@@ -128,24 +128,27 @@ const globalPostalQuery = useMemo(() => {
 
   return (
     <div className="flex h-[calc(100vh-180px)] md:h-[calc(100vh-200px)] w-full flex-col bg-white dark:bg-[#020617] text-slate-900 dark:text-slate-100 antialiased overflow-hidden border border-slate-200 dark:border-slate-800 rounded-sm shadow-xl relative transition-colors duration-300">
-      
       {/* --- NEW: TOP GLOBAL NAVIGATION BAR --- */}
       <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] font-bold uppercase text-slate-500">Live Lead Feed</span>
+          <span className="text-[10px] font-bold uppercase text-slate-500">
+            Live Lead Feed
+          </span>
         </div>
-        
-        <button 
+
+        <button
           onClick={() => setShowGlobalMap(!showGlobalMap)}
           className={`flex items-center gap-2 px-4 py-1.5 rounded-sm text-[10px] font-bold uppercase transition-all border cursor-pointer ${
-            showGlobalMap 
-            ? "bg-indigo-600 border-indigo-600 text-white shadow-lg" 
-            : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-primary-btn"
+            showGlobalMap
+              ? "bg-indigo-600 border-indigo-600 text-white shadow-lg"
+              : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-primary-btn"
           }`}
         >
           {showGlobalMap ? <ChevronLeft size={14} /> : <Globe size={14} />}
-          {showGlobalMap ? "Back to Details" : "Service Map for all Postal Codes"}
+          {showGlobalMap
+            ? "Back to Details"
+            : "Service Map for all Postal Codes"}
         </button>
       </div>
 
@@ -181,8 +184,13 @@ const globalPostalQuery = useMemo(() => {
           <div className="flex-1 p-6 md:p-10 animate-in fade-in zoom-in-95 duration-500 bg-slate-50 dark:bg-slate-950 overflow-y-auto">
             <div className="h-full max-w-7xl mx-auto flex flex-col gap-6">
               <div>
-                <h2 className="text-2xl font-black uppercase tracking-tighter text-indigo-600 dark:text-indigo-400">Fleet Coverage Map</h2>
-                <p className="text-xs text-slate-500 font-medium">Visualizing lead clusters from selected dates in Melbourne/Victoria region.</p>
+                <h2 className="text-2xl font-black uppercase tracking-tighter text-indigo-600 dark:text-indigo-400">
+                  Fleet Coverage Map
+                </h2>
+                <p className="text-xs text-slate-500 font-medium">
+                  Visualizing lead clusters from selected dates in
+                  Melbourne/Victoria region.
+                </p>
               </div>
               <div className="flex-1 min-h-[500px] rounded-sm border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xl relative bg-white">
                 <iframe
@@ -265,7 +273,10 @@ const globalPostalQuery = useMemo(() => {
                         <div className="flex justify-between items-center mt-2">
                           <p className="text-[15px] text-slate-500 dark:text-slate-400 font-medium tracking-tight">
                             {lead.created_at
-                              ? formatDate(new Date(lead.created_at), "MMM dd, yyyy")
+                              ? formatDate(
+                                  new Date(lead.created_at),
+                                  "MMM dd, yyyy",
+                                )
                               : "N/A"}
                           </p>
                           {!lead.is_filtered && (
@@ -339,7 +350,10 @@ const globalPostalQuery = useMemo(() => {
                                 className="hover:text-primary-btn transition-colors cursor-pointer"
                               >
                                 {copied ? (
-                                  <Check size={14} className="text-emerald-500" />
+                                  <Check
+                                    size={14}
+                                    className="text-emerald-500"
+                                  />
                                 ) : (
                                   <Copy size={14} />
                                 )}
@@ -356,7 +370,7 @@ const globalPostalQuery = useMemo(() => {
                         onClick={() =>
                           window.open(
                             `https://wa.me/${selectedLead.phone?.replace(/\D/g, "")}`,
-                            "_blank"
+                            "_blank",
                           )
                         }
                         className="w-full md:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm font-bold text-xs uppercase flex items-center justify-center gap-3  shadow-emerald-500/20 cursor-pointer transition-all"
@@ -404,7 +418,10 @@ const globalPostalQuery = useMemo(() => {
                           <div className="max-w-3xl space-y-6 animate-in fade-in duration-300">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2 font-bold text-xs uppercase text-slate-500 tracking-widest">
-                                <StickyNote size={16} className="text-primary-btn" />{" "}
+                                <StickyNote
+                                  size={16}
+                                  className="text-primary-btn"
+                                />{" "}
                                 Lead Observations
                               </div>
                               {savingId === selectedLead.id && (
@@ -419,7 +436,9 @@ const globalPostalQuery = useMemo(() => {
                               className="w-full h-64 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-sm p-8 text-lg outline-none focus:border-primary-btn/40 focus:ring-4 focus:ring-primary-btn/5 transition-all resize-none shadow-sm dark:text-slate-200"
                               placeholder="Add private notes about this prospect..."
                               defaultValue={selectedLead.notes || ""}
-                              onBlur={(e) => onSave(selectedLead.id, e.target.value)}
+                              onBlur={(e) =>
+                                onSave(selectedLead.id, e.target.value)
+                              }
                             />
                           </div>
                         ) : (
@@ -463,7 +482,7 @@ const globalPostalQuery = useMemo(() => {
 
 function LeadMap({ postalCode }: { postalCode: string }) {
   // 1. New State for Map Type: 'm' (Roadmap), 'h' (Hybrid/Satellite), 'p' (Terrain)
-  const [mapType, setMapType] = useState<'m' | 'h' | 'p'>('h');
+  const [mapType, setMapType] = useState<"m" | "h" | "p">("m");
 
   if (!postalCode) {
     return (
@@ -476,34 +495,37 @@ function LeadMap({ postalCode }: { postalCode: string }) {
     );
   }
 
-  const locationQuery = encodeURIComponent(`${postalCode}, Melbourne, Australia`);
+  const locationQuery = encodeURIComponent(
+    `${postalCode}, Melbourne, Australia`,
+  );
   // 2. Updated URL to use the dynamic mapType state
-  const mapUrl = `https://www.google.com/maps?q=area postcode ${locationQuery}&output=embed&z=13&t=${mapType}`;
+  const mapUrl = `https://www.google.com/maps?q=area postcode ${locationQuery}&output=embed&z=10&t=${mapType}`;
 
   return (
     <div className="space-y-2 h-full flex flex-col">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 font-bold text-xs uppercase text-slate-500 tracking-widest">
-          <MapPinned size={16} className="text-primary-btn" /> Service Location Intelligence
+          <MapPinned size={16} className="text-primary-btn" /> Service Location
+          Intelligence
         </div>
-        
+
         {/* 3. Admin Map Type Controller */}
         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-sm border border-slate-200 dark:border-slate-700">
-          <button 
-            onClick={() => setMapType('m')}
-            className={`px-2 py-1 text-[10px] font-bold uppercase flex items-center gap-1 cursor-pointer transition-all ${mapType === 'm' ? 'bg-white dark:bg-slate-600 shadow-sm text-primary-btn' : 'text-slate-400'}`}
+          <button
+            onClick={() => setMapType("m")}
+            className={`px-2 py-1 text-[10px] font-bold uppercase flex items-center gap-1 cursor-pointer transition-all ${mapType === "m" ? "bg-white dark:bg-slate-600 shadow-sm text-primary-btn" : "text-slate-400"}`}
           >
             <MapIcon size={12} /> Map
           </button>
-          <button 
-            onClick={() => setMapType('h')}
-            className={`px-2 py-1 text-[10px] font-bold uppercase flex items-center gap-1 cursor-pointer transition-all ${mapType === 'h' ? 'bg-white dark:bg-slate-600 shadow-sm text-primary-btn' : 'text-slate-400'}`}
+          <button
+            onClick={() => setMapType("h")}
+            className={`px-2 py-1 text-[10px] font-bold uppercase flex items-center gap-1 cursor-pointer transition-all ${mapType === "h" ? "bg-white dark:bg-slate-600 shadow-sm text-primary-btn" : "text-slate-400"}`}
           >
             <ImageIcon size={12} /> Satellite
           </button>
-          <button 
-            onClick={() => setMapType('p')}
-            className={`px-2 py-1 text-[10px] font-bold uppercase flex items-center gap-1 cursor-pointer transition-all ${mapType === 'p' ? 'bg-white dark:bg-slate-600 shadow-sm text-primary-btn' : 'text-slate-400'}`}
+          <button
+            onClick={() => setMapType("p")}
+            className={`px-2 py-1 text-[10px] font-bold uppercase flex items-center gap-1 cursor-pointer transition-all ${mapType === "p" ? "bg-white dark:bg-slate-600 shadow-sm text-primary-btn" : "text-slate-400"}`}
           >
             <Layers size={12} /> Terrain
           </button>
@@ -521,9 +543,14 @@ function LeadMap({ postalCode }: { postalCode: string }) {
           loading="lazy"
           className="contrast-[1.15] saturate-[1.2] brightness-[0.95] dark:brightness-[0.8] dark:contrast-[1.2] transition-all"
         ></iframe>
-        
+
         <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 px-3 py-1.5 rounded-sm border border-slate-200 dark:border-slate-800 shadow-sm text-[10px] font-bold uppercase tracking-tighter">
-          Melbourne, VIC {postalCode} • {mapType === 'h' ? 'Satellite View' : mapType === 'p' ? 'Terrain View' : 'Standard View'}
+          Melbourne, VIC {postalCode} •{" "}
+          {mapType === "h"
+            ? "Satellite View"
+            : mapType === "p"
+              ? "Terrain View"
+              : "Standard View"}
         </div>
       </div>
     </div>
@@ -566,26 +593,41 @@ function IntelligenceContent({ selectedLead, getRawData }: any) {
     <div className="p-8 space-y-8">
       <div className="flex items-center justify-between">
         <h3 className="text-[15px] font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-          <ClipboardList size={16} className="text-primary-btn" /> Lead Data Intelligence
+          <ClipboardList size={16} className="text-primary-btn" /> Lead Data
+          Intelligence
         </h3>
       </div>
 
       <div className="space-y-3">
         {!raw?.field_data ? (
           <div className="py-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-sm text-center">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Metadata Not Available</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Metadata Not Available
+            </p>
           </div>
         ) : (
           raw.field_data.map((field: any, i: number) => {
-            if (["full_name", "email", "phone_number"].includes(field.name)) return null;
-            const isPostalField = field.name.toLowerCase().includes("post_code") || field.name.toLowerCase().includes("zip");
+            if (["full_name", "email", "phone_number"].includes(field.name))
+              return null;
+            const isPostalField =
+              field.name.toLowerCase().includes("post_code") ||
+              field.name.toLowerCase().includes("zip");
 
             return (
-              <div key={i} className="group p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-sm hover:border-primary-btn/30 transition-all">
+              <div
+                key={i}
+                className="group p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-sm hover:border-primary-btn/30 transition-all"
+              >
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs uppercase text-slate-500 font-bold tracking-tight">{field.name.replace(/_/g, " ")}</span>
+                  <span className="text-xs uppercase text-slate-500 font-bold tracking-tight">
+                    {field.name.replace(/_/g, " ")}
+                  </span>
                   {isPostalField && !isEditingZip && (
-                    <PencilIcon size={14} className="text-slate-400 hover:text-primary-btn cursor-pointer transition-colors" onClick={() => setIsEditingZip(true)} />
+                    <PencilIcon
+                      size={14}
+                      className="text-slate-400 hover:text-primary-btn cursor-pointer transition-colors"
+                      onClick={() => setIsEditingZip(true)}
+                    />
                   )}
                 </div>
                 {isPostalField && isEditingZip ? (
@@ -597,16 +639,29 @@ function IntelligenceContent({ selectedLead, getRawData }: any) {
                       onChange={(e) => setEditedZip(e.target.value)}
                       autoFocus
                     />
-                    <button onClick={handleUpdatePostal} disabled={isUpdating} className="p-2 bg-emerald-600 text-white rounded-sm hover:bg-emerald-700 disabled:opacity-50">
-                      {isUpdating ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                    <button
+                      onClick={handleUpdatePostal}
+                      disabled={isUpdating}
+                      className="p-2 bg-emerald-600 text-white rounded-sm hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {isUpdating ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Check size={14} />
+                      )}
                     </button>
-                    <button onClick={() => setIsEditingZip(false)} className="p-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-sm">
+                    <button
+                      onClick={() => setIsEditingZip(false)}
+                      className="p-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-sm"
+                    >
                       <X size={14} />
                     </button>
                   </div>
                 ) : (
                   <p className="text-[15px] font-bold text-slate-900 dark:text-slate-100 break-words">
-                    {isPostalField ? selectedLead.postal_code || field.values?.[0] : field.values?.[0] || "—"}
+                    {isPostalField
+                      ? selectedLead.postal_code || field.values?.[0]
+                      : field.values?.[0] || "—"}
                   </p>
                 )}
               </div>
@@ -617,22 +672,44 @@ function IntelligenceContent({ selectedLead, getRawData }: any) {
 
       <div className="pt-8 border-t border-slate-200 dark:border-slate-800 space-y-4">
         <div className="flex justify-between items-center text-[11px] font-bold">
-          <span className="text-slate-500 uppercase tracking-widest">Meta Lead ID</span>
+          <span className="text-slate-500 uppercase tracking-widest">
+            Meta Lead ID
+          </span>
           <span className="bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded-sm font-mono text-slate-600 dark:text-slate-400 select-all border border-slate-200 dark:border-slate-800">
             {identity?.meta_lead_id || "N/A"}
           </span>
         </div>
         <div className="space-y-2">
           <div className="flex justify-between items-center text-[11px] font-bold">
-            <span className="text-slate-500 uppercase tracking-widest">Captured (AUS)</span>
+            <span className="text-slate-500 uppercase tracking-widest">
+              Captured (AUS)
+            </span>
             <span className="text-slate-700 dark:text-slate-400">
-              {new Date(selectedLead.created_at).toLocaleString("en-AU", { timeZone: "Australia/Melbourne", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true })}
+              {new Date(selectedLead.created_at).toLocaleString("en-AU", {
+                timeZone: "Australia/Melbourne",
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })}
             </span>
           </div>
           <div className="flex justify-between items-center text-[11px] font-bold">
-            <span className="text-slate-500 uppercase tracking-widest">Captured (IND)</span>
+            <span className="text-slate-500 uppercase tracking-widest">
+              Captured (IND)
+            </span>
             <span className="text-slate-700 dark:text-slate-400">
-              {new Date(selectedLead.created_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true })}
+              {new Date(selectedLead.created_at).toLocaleString("en-IN", {
+                timeZone: "Asia/Kolkata",
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })}
             </span>
           </div>
         </div>
