@@ -27,6 +27,17 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 
+interface LeadData {
+  created_at: string | Date;
+  is_filtered: boolean;
+  postal_code?: string;
+  [key: string]: any;
+}
+
+interface HourlyGroup {
+  [date: string]: number[];
+}
+
 function MetricCard({ label, val, sub, icon, color, glow }: any) {
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-sm relative overflow-hidden group hover:border-indigo-500/30 transition-all duration-500 shadow-sm">
@@ -105,6 +116,139 @@ export default function LeadAnalytics({ data }: { data: any[] }) {
       zips: Object.values(zipMap).sort((a: any, b: any) => b.total - a.total),
     };
   }, [data]);
+
+  const exportHourlyXLSX = () => {
+    if (!data || data.length === 0) return;
+
+    // 1. Process Data with strict typing
+    const groupedByDate: HourlyGroup = {};
+    const allDates: string[] = [];
+
+    data.forEach((lead: LeadData) => {
+      const d = new Date(lead.created_at);
+      const dateStr = d.toLocaleDateString("en-GB"); // DD/MM/YYYY
+      const hour = d.getHours(); // 0-23
+
+      if (!groupedByDate[dateStr]) {
+        groupedByDate[dateStr] = new Array(24).fill(0);
+        allDates.push(dateStr);
+      }
+      groupedByDate[dateStr][hour]++;
+    });
+
+    // Sort dates properly
+    const sortedDates = allDates.sort((a, b) => {
+      const [dA, mA, yA] = a.split("/").map(Number);
+      const [dB, mB, yB] = b.split("/").map(Number);
+      return (
+        new Date(yA, mA - 1, dA).getTime() - new Date(yB, mB - 1, dB).getTime()
+      );
+    });
+
+    const isSingleDay = sortedDates.length === 1;
+    const rows: any[][] = [];
+    const merges: XLSX.Range[] = [];
+
+    // Helper to create the 2-tier header
+    const addFormattedSection = (title: string, hourData: number[]) => {
+      const startRow = rows.length;
+
+      // Title Row
+      rows.push([title.toUpperCase()]);
+
+      // Header Row 1: AM/PM Labels
+      // We add placeholders to ensure cells exist for merging
+      const periodRow = [
+        "",
+        "AM",
+        ...new Array(11).fill(""),
+        "PM",
+        ...new Array(11).fill(""),
+      ];
+      rows.push(periodRow);
+
+      // Define Merges for AM (Cols 1-12) and PM (Cols 13-24)
+      merges.push({
+        s: { r: startRow + 1, c: 1 },
+        e: { r: startRow + 1, c: 12 },
+      });
+      merges.push({
+        s: { r: startRow + 1, c: 13 },
+        e: { r: startRow + 1, c: 24 },
+      });
+
+      // Header Row 2: 12-hour labels
+      rows.push([
+        "TIME SLOT",
+        "12-1",
+        "1-2",
+        "2-3",
+        "3-4",
+        "4-5",
+        "5-6",
+        "6-7",
+        "7-8",
+        "8-9",
+        "9-10",
+        "10-11",
+        "11-12", // AM
+        "12-1",
+        "1-2",
+        "2-3",
+        "3-4",
+        "4-5",
+        "5-6",
+        "6-7",
+        "7-8",
+        "8-9",
+        "9-10",
+        "10-11",
+        "11-12", // PM
+        "TOTAL",
+      ]);
+
+      const dayTotal = hourData.reduce((a, b) => a + b, 0);
+      rows.push(["LEADS", ...hourData, dayTotal]);
+
+      rows.push([]); // Spacer
+      rows.push([]); // Double spacer for visual clarity
+    };
+
+    // 2. Build the Logic
+    if (!isSingleDay) {
+      rows.push([
+        `REPORT RANGE: ${sortedDates[0]} - ${sortedDates[sortedDates.length - 1]}`,
+      ]);
+      rows.push([]);
+
+      const overall = new Array(24).fill(0);
+      Object.values(groupedByDate).forEach((dayArr) => {
+        dayArr.forEach((val, hr) => (overall[hr] += val));
+      });
+      addFormattedSection("OVERALL PERFORMANCE SUMMARY", overall);
+    }
+
+    sortedDates.forEach((date) => {
+      addFormattedSection(`DATE: ${date}`, groupedByDate[date]);
+    });
+
+    // 3. Create Workbook
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    // Apply Merges
+    ws["!merges"] = merges;
+
+    // 4. Set Column Widths (Wider first column, consistent slots)
+    ws["!cols"] = [
+      { wch: 25 }, // TIME SLOT column
+      ...new Array(24).fill({ wch: 6 }), // Hour columns
+      { wch: 10 }, // Total column
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Hourly Intelligence");
+    XLSX.writeFile(wb, `Lead_Hourly_Analysis_${new Date().getTime()}.xlsx`);
+  };
 
   const generateReport = () => {
     const wsData = stats?.zips.map((z: any) => ({
@@ -254,9 +398,17 @@ export default function LeadAnalytics({ data }: { data: any[] }) {
 
           {/* Hourly Heatmap */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 md:p-8 rounded-sm h-[400px] md:h-[450px]">
-            <h4 className="text-[11px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-10 flex items-center gap-2">
-              <Clock size={16} className="text-emerald-500" /> Peak Inflow
-            </h4>
+            <div className="flex justify-between items-start mb-10">
+              <h4 className="text-[11px] uppercase font-bold text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <Clock size={16} className="text-emerald-500" /> Peak Inflow
+              </h4>
+              <button
+                onClick={exportHourlyXLSX}
+                className="bg-primary-btn text-white px-6 md:px-8 py-2.5 rounded-sm text-[9px] uppercase font-bold flex items-center gap-2 transition-all cursor-pointer"
+              >
+                <Download size={12} /> Export CSV
+              </button>
+            </div>
             <ResponsiveContainer width="100%" height="80%">
               <LineChart data={stats.hourly}>
                 <XAxis
