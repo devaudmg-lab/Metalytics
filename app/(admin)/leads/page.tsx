@@ -13,7 +13,7 @@ export default async function LeadsPage() {
         meta_lead_id,
         raw_metadata
       )
-    `)
+    `).eq("source","meta_ad")
     .order("created_at", { ascending: false });
 
   if (error) {

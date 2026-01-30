@@ -66,6 +66,7 @@ function MetricCard({ label, val, sub, icon, color, glow }: any) {
 
 export default function LeadAnalytics({ data }: { data: any[] }) {
   const [limitZips, setLimitZips] = useState(true);
+  console.log(data);
 
   const stats = useMemo(() => {
     if (!data || data.length === 0) return null;
@@ -120,23 +121,32 @@ export default function LeadAnalytics({ data }: { data: any[] }) {
   const exportHourlyXLSX = () => {
     if (!data || data.length === 0) return;
 
-    // 1. Process Data with strict typing
-    const groupedByDate: HourlyGroup = {};
+    // 1. Enhanced Grouping Logic
+    const groupedByDate: {
+      [date: string]: { total: number; zips: Record<string, number> }[];
+    } = {};
     const allDates: string[] = [];
 
     data.forEach((lead: LeadData) => {
       const d = new Date(lead.created_at);
-      const dateStr = d.toLocaleDateString("en-GB"); // DD/MM/YYYY
-      const hour = d.getHours(); // 0-23
+      const dateStr = d.toLocaleDateString("en-GB");
+      const hour = d.getHours();
+      const zip = lead.postal_code || "N/A";
 
       if (!groupedByDate[dateStr]) {
-        groupedByDate[dateStr] = new Array(24).fill(0);
+        // Initialize 24 hours with empty zip maps
+        groupedByDate[dateStr] = Array.from({ length: 24 }, () => ({
+          total: 0,
+          zips: {},
+        }));
         allDates.push(dateStr);
       }
-      groupedByDate[dateStr][hour]++;
+
+      groupedByDate[dateStr][hour].total++;
+      groupedByDate[dateStr][hour].zips[zip] =
+        (groupedByDate[dateStr][hour].zips[zip] || 0) + 1;
     });
 
-    // Sort dates properly
     const sortedDates = allDates.sort((a, b) => {
       const [dA, mA, yA] = a.split("/").map(Number);
       const [dB, mB, yB] = b.split("/").map(Number);
@@ -145,39 +155,23 @@ export default function LeadAnalytics({ data }: { data: any[] }) {
       );
     });
 
-    const isSingleDay = sortedDates.length === 1;
     const rows: any[][] = [];
-    const merges: XLSX.Range[] = [];
 
-    // Helper to create the 2-tier header
-    const addFormattedSection = (title: string, hourData: number[]) => {
-      const startRow = rows.length;
-
-      // Title Row
+    // Helper to build the section with ZIP breakdown
+    const addFormattedSection = (
+      title: string,
+      hourData: { total: number; zips: Record<string, number> }[],
+    ) => {
       rows.push([title.toUpperCase()]);
 
-      // Header Row 1: AM/PM Labels
-      // We add placeholders to ensure cells exist for merging
-      const periodRow = [
+      // Header Row (AM/PM and Time Slots)
+      rows.push([
         "",
         "AM",
         ...new Array(11).fill(""),
         "PM",
         ...new Array(11).fill(""),
-      ];
-      rows.push(periodRow);
-
-      // Define Merges for AM (Cols 1-12) and PM (Cols 13-24)
-      merges.push({
-        s: { r: startRow + 1, c: 1 },
-        e: { r: startRow + 1, c: 12 },
-      });
-      merges.push({
-        s: { r: startRow + 1, c: 13 },
-        e: { r: startRow + 1, c: 24 },
-      });
-
-      // Header Row 2: 12-hour labels
+      ]);
       rows.push([
         "TIME SLOT",
         "12-1",
@@ -191,7 +185,7 @@ export default function LeadAnalytics({ data }: { data: any[] }) {
         "8-9",
         "9-10",
         "10-11",
-        "11-12", // AM
+        "11-12",
         "12-1",
         "1-2",
         "2-3",
@@ -203,49 +197,62 @@ export default function LeadAnalytics({ data }: { data: any[] }) {
         "8-9",
         "9-10",
         "10-11",
-        "11-12", // PM
+        "11-12",
         "TOTAL",
       ]);
 
-      const dayTotal = hourData.reduce((a, b) => a + b, 0);
-      rows.push(["LEADS", ...hourData, dayTotal]);
+      // Leads Total Row
+      const hourlyTotals = hourData.map((h) => h.total);
+      const dayGrandTotal = hourlyTotals.reduce((a, b) => a + b, 0);
+      rows.push(["LEADS", ...hourlyTotals, dayGrandTotal]);
+
+      // --- NEW: Postal Code Breakdown Rows ---
+      // Find the maximum number of unique zips in any single hour to know how many rows to create
+      const zipEntriesByHour = hourData.map((h) =>
+        Object.entries(h.zips).map(([zip, count]) => `${zip} - ${count}`),
+      );
+      const maxZipRows = Math.max(...zipEntriesByHour.map((z) => z.length));
+
+      for (let i = 0; i < maxZipRows; i++) {
+        const rowLabel = i === 0 ? "POSTAL CODES" : "";
+        const zipRow = [rowLabel];
+
+        // Fill columns for 24 hours
+        for (let hr = 0; hr < 24; hr++) {
+          zipRow.push(zipEntriesByHour[hr][i] || ""); // Add zip string or empty cell
+        }
+        rows.push(zipRow);
+      }
 
       rows.push([]); // Spacer
-      rows.push([]); // Double spacer for visual clarity
+      rows.push([]);
     };
 
-    // 2. Build the Logic
-    if (!isSingleDay) {
-      rows.push([
-        `REPORT RANGE: ${sortedDates[0]} - ${sortedDates[sortedDates.length - 1]}`,
-      ]);
-      rows.push([]);
-
-      const overall = new Array(24).fill(0);
+    // 2. Build logic for Overall and Daily
+    if (sortedDates.length > 1) {
+      const overall = Array.from({ length: 24 }, () => ({
+        total: 0,
+        zips: {} as Record<string, number>,
+      }));
       Object.values(groupedByDate).forEach((dayArr) => {
-        dayArr.forEach((val, hr) => (overall[hr] += val));
+        dayArr.forEach((hourObj, hr) => {
+          overall[hr].total += hourObj.total;
+          Object.entries(hourObj.zips).forEach(([zip, count]) => {
+            overall[hr].zips[zip] = (overall[hr].zips[zip] || 0) + count;
+          });
+        });
       });
       addFormattedSection("OVERALL PERFORMANCE SUMMARY", overall);
     }
 
-    sortedDates.forEach((date) => {
-      addFormattedSection(`DATE: ${date}`, groupedByDate[date]);
-    });
+    sortedDates.forEach((date) =>
+      addFormattedSection(`DATE: ${date}`, groupedByDate[date]),
+    );
 
-    // 3. Create Workbook
+    // 3. Create and Save Workbook
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(rows);
-
-    // Apply Merges
-    ws["!merges"] = merges;
-
-    // 4. Set Column Widths (Wider first column, consistent slots)
-    ws["!cols"] = [
-      { wch: 25 }, // TIME SLOT column
-      ...new Array(24).fill({ wch: 6 }), // Hour columns
-      { wch: 10 }, // Total column
-    ];
-
+    ws["!cols"] = [{ wch: 20 }, ...new Array(25).fill({ wch: 12 })]; // Wider columns for Zip strings
     XLSX.utils.book_append_sheet(wb, ws, "Hourly Intelligence");
     XLSX.writeFile(wb, `Lead_Hourly_Analysis_${new Date().getTime()}.xlsx`);
   };
