@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -38,6 +38,39 @@ interface HourlyGroup {
   [date: string]: number[];
 }
 
+const syncToSheet = async (payload: any[]) => {
+  const SCRIPT_URL = process.env.NEXT_PUBLIC_GOOGLE_SPREADSHEET_WEB_APP || "";
+
+  const cleanedPayload = payload.map((item) => {
+    let dateObj = new Date(item.created_at);
+
+    // Agar date invalid hai, toh aaj ki date use karo
+    if (isNaN(dateObj.getTime())) {
+      dateObj = new Date();
+    }
+
+    return {
+      // Sirf wahi data bhejo jo Sheet ko chahiye
+      date: dateObj.toLocaleDateString("en-US"), // MM/DD/YYYY format
+      hour: dateObj.getHours() + ":00",
+      postal_code: item.postal_code || "N/A",
+      status: item.is_filtered ? "Verified" : "Outside",
+    };
+  });
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(cleanedPayload),
+    });
+    console.log("✅ Sync Done!");
+  } catch (error) {
+    console.error("❌ Sync Error:", error);
+  }
+};
+
 function MetricCard({ label, val, sub, icon, color, glow }: any) {
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-sm relative overflow-hidden group hover:border-indigo-500/30 transition-all duration-500 shadow-sm">
@@ -67,6 +100,33 @@ function MetricCard({ label, val, sub, icon, color, glow }: any) {
 export default function LeadAnalytics({ data }: { data: any[] }) {
   const [limitZips, setLimitZips] = useState(true);
   console.log(data);
+  // Component ke andar ek local state banayein
+  const [lastSyncedTime, setLastSyncedTime] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (data && data.length > 0) {
+      const latestLead = data[data.length - 1];
+
+      // CONDITION: Agar is lead ka time hamare 'lastSyncedTime' se naya hai, tabhi bhejo
+      if (latestLead.created_at !== lastSyncedTime) {
+        console.log("Syncing new live lead...");
+        syncToSheet([latestLead]);
+        setLastSyncedTime(latestLead.created_at); // Yaad rakho ki ye sync ho gayi
+      }
+    }
+  }, [data]);
+
+  const handleFullSync = async () => {
+    if (!data || data.length === 0) return;
+
+    if (
+      confirm(`Kya aap saara (${data.length}) data sync karna chahte hain?`)
+    ) {
+      // Poora data array bhej rahe hain
+      await syncToSheet(data);
+      alert("✅ Bulk sync complete!");
+    }
+  };
 
   const stats = useMemo(() => {
     if (!data || data.length === 0) return null;
@@ -409,6 +469,12 @@ export default function LeadAnalytics({ data }: { data: any[] }) {
               <h4 className="text-[11px] uppercase font-bold text-slate-500 dark:text-slate-400 flex items-center gap-2">
                 <Clock size={16} className="text-emerald-500" /> Peak Inflow
               </h4>
+              <button
+                onClick={handleFullSync}
+                className="bg-primary-btn text-white px-6 md:px-8 py-2.5 rounded-sm text-[9px] uppercase font-bold flex items-center gap-2 transition-all cursor-pointer"
+              >
+                Sync All Data to Sheet
+              </button>
               <button
                 onClick={exportHourlyXLSX}
                 className="bg-primary-btn text-white px-6 md:px-8 py-2.5 rounded-sm text-[9px] uppercase font-bold flex items-center gap-2 transition-all cursor-pointer"
