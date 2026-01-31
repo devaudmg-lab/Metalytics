@@ -204,9 +204,16 @@ export async function POST(req: NextRequest) {
         };
 
         // Call the sync function (awaiting is optional depending on if you want to block)
-        syncToSheet([leadForSheet]).catch((err) =>
-          console.error("Sheet Sync Failed", err),
-        );
+        try {
+          await syncToSheet([leadForSheet]);
+          console.log("Sync to sheet completed successfully");
+          console.log(
+            "Attempting sync. URL defined:",
+            !!process.env.NEXT_PUBLIC_GOOGLE_SPREADSHEET_WEB_APP,
+          );
+        } catch (err) {
+          console.error("Sheet Sync Failed", err);
+        }
       }
     }
 
