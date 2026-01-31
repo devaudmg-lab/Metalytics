@@ -87,11 +87,12 @@ export async function POST(req: NextRequest) {
   );
 
   try {
-    // --- PART A: MESSENGER LOGIC ---
+    // --- PART A: MESSENGER LOGIC (REWRITTEN & SECURE) ---
     if (entry?.messaging?.[0]) {
       const event = entry.messaging[0];
       const isEcho = event.message?.is_echo;
       const psid = isEcho ? event.recipient?.id : event.sender?.id;
+
       if (!psid) return NextResponse.json({ success: true });
 
       let messageText = event.message?.text || "";
@@ -105,79 +106,143 @@ export async function POST(req: NextRequest) {
         if (!messageText) messageText = `Sent a ${mediaType}`;
       }
 
-      const { data: identity } = await supabaseAdmin
+      // 1. Check if identity already exists
+      const { data: identity, error: idError } = await supabaseAdmin
         .from("meta_identities")
         .select("lead_id")
         .eq("messenger_psid", psid)
         .maybeSingle();
+
       let leadId = identity?.lead_id;
 
+      // 2. Create new lead if it doesn't exist
       if (!leadId) {
         const token = process.env.META_PAGE_ACCESS_TOKEN;
-        const res = await fetch(
-          `https://graph.facebook.com/v24.0/${psid}?fields=first_name,last_name&access_token=${token}`,
-        );
-        const profile = await res.json();
-        const fullName =
-          `${profile.first_name || ""} ${profile.last_name || ""}`.trim() ||
-          "Messenger User";
+        let fullName = "Messenger User"; // Default fallback
+        let profileRaw: any = {};
 
-        const { data: newLead } = await supabaseAdmin
+        try {
+          const res = await fetch(
+            `https://graph.facebook.com/v24.0/${psid}?fields=first_name,last_name&access_token=${token}`,
+          );
+          profileRaw = await res.json();
+
+          // Agar Meta ne error nahi diya, toh name update karo
+          if (profileRaw.first_name || profileRaw.last_name) {
+            fullName =
+              `${profileRaw.first_name || ""} ${profileRaw.last_name || ""}`.trim();
+          } else if (profileRaw.error) {
+            console.error(
+              "Meta Profile Fetch Error (Handled):",
+              profileRaw.error.message,
+            );
+          }
+        } catch (fetchErr) {
+          console.error("Network error while fetching profile:", fetchErr);
+        }
+
+        // Insert into 'leads' table
+        const { data: newLead, error: leadInsertError } = await supabaseAdmin
           .from("leads")
-          .insert([{ full_name: fullName, source: "messenger" }])
+          .insert([
+            {
+              full_name: fullName,
+              source: "messenger",
+              last_interaction_at: new Date().toISOString(),
+            },
+          ])
           .select("id")
           .single();
+
+        if (leadInsertError) {
+          console.error("CRITICAL: Lead DB Insert Failed:", leadInsertError);
+          // Agar database insert hi fail ho gaya, toh response yahi khatam karo
+          return NextResponse.json(
+            { error: "Database failure" },
+            { status: 200 },
+          );
+        }
+
         leadId = newLead?.id;
-        await supabaseAdmin
-          .from("meta_identities")
-          .insert([
-            { lead_id: leadId, messenger_psid: psid, raw_metadata: profile },
+
+        // Save identity mapping (Important to prevent duplicates)
+        if (leadId) {
+          await supabaseAdmin.from("meta_identities").insert([
+            {
+              lead_id: leadId,
+              messenger_psid: psid,
+              raw_metadata: profileRaw, // Store whatever Meta sent (even if it was an error)
+            },
           ]);
+        }
       }
 
-      await supabaseAdmin.from("lead_messages").insert([
-        {
-          lead_id: leadId,
-          sender: isEcho ? "page" : "user",
-          message_text: messageText,
-          direction: isEcho ? "outbound" : "inbound",
-          status: "delivered",
-          metadata: { media_url: mediaUrl, type: mediaType },
-        },
-      ]);
+      // 3. Save the Message (Sirf tab jab leadId successfully mil chuka ho)
+      if (leadId) {
+        const { error: msgError } = await supabaseAdmin
+          .from("lead_messages")
+          .insert([
+            {
+              lead_id: leadId,
+              sender: isEcho ? "page" : "user",
+              message_text: messageText,
+              direction: isEcho ? "outbound" : "inbound",
+              status: "delivered",
+              metadata: { media_url: mediaUrl, type: mediaType },
+            },
+          ]);
 
-      if (!isEcho)
-        await supabaseAdmin
-          .from("leads")
-          .update({ last_interaction_at: new Date().toISOString() })
-          .eq("id", leadId);
+        if (msgError) console.error("Message Insert Error:", msgError);
+
+        // 4. Update last interaction for existing leads
+        if (!isEcho) {
+          await supabaseAdmin
+            .from("leads")
+            .update({ last_interaction_at: new Date().toISOString() })
+            .eq("id", leadId);
+        }
+      }
     }
 
     // --- PART B: META LEAD ADS ---
-    else if (entry?.changes?.[0]?.value?.leadgen_id) {
+    // 'else if' ki jagah sirf 'if' use karein taaki checks independent rahein
+    if (entry?.changes?.[0]?.value?.leadgen_id) {
       const leadgenId = entry.changes[0].value.leadgen_id;
-      const { data: existing } = await supabaseAdmin
+      console.log("New Lead Ad detected. ID:", leadgenId);
+
+      const { data: existing, error: checkError } = await supabaseAdmin
         .from("meta_identities")
         .select("lead_id")
         .eq("meta_lead_id", leadgenId)
         .maybeSingle();
+
+      if (checkError) console.error("DB Check Error:", checkError);
 
       if (!existing) {
         const token = process.env.META_PAGE_ACCESS_TOKEN;
         const res = await fetch(
           `https://graph.facebook.com/v24.0/${leadgenId}?access_token=${token}`,
         );
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("Meta API Fetch Failed:", errorText);
+          // Lead fetch fail hui, function yahan se exit kar jayega
+          return NextResponse.json({ success: false, error: "Meta API Fail" });
+        }
+
         const details = await res.json();
         const findField = (names: string[]) =>
           details.field_data?.find((f: any) =>
             names.includes(f.name.toLowerCase()),
           )?.values?.[0] || "";
 
-        const { data: lead } = await supabaseAdmin
+        // Insert Lead with Error Handling
+        const { data: lead, error: insertError } = await supabaseAdmin
           .from("leads")
           .insert([
             {
-              full_name: findField(["full_name", "name"]),
+              full_name: findField(["full_name", "name"]) || "Unknown Name",
               email: findField(["email"]),
               phone: findField(["phone_number", "phone"]),
               postal_code: findField(["post_code", "zip"]),
@@ -187,38 +252,38 @@ export async function POST(req: NextRequest) {
           .select("id")
           .single();
 
-        await supabaseAdmin.from("meta_identities").insert([
-          {
-            lead_id: lead?.id,
-            meta_lead_id: leadgenId,
-            raw_metadata: details,
-          },
-        ]);
+        if (insertError) {
+          console.error("Lead DB Insert Failed:", insertError);
+        } else if (lead) {
+          // Identity insert tabhi karein jab lead successfully insert ho gayi ho
+          await supabaseAdmin.from("meta_identities").insert([
+            {
+              lead_id: lead.id,
+              meta_lead_id: leadgenId,
+              raw_metadata: details,
+            },
+          ]);
 
-        // Construct the payload to match what syncToSheet expects
-        const leadForSheet = {
-          created_at: new Date().toISOString(),
-          postal_code: findField(["post_code", "zip"]),
-          // logic for is_filtered depends on your app's criteria
-          is_filtered: true,
-        };
+          const leadForSheet = {
+            created_at: new Date().toISOString(),
+            postal_code: findField(["post_code", "zip"]),
+            is_filtered: true,
+          };
 
-        // Call the sync function (awaiting is optional depending on if you want to block)
-        try {
-          await syncToSheet([leadForSheet]);
-          console.log("Sync to sheet completed successfully");
-          console.log(
-            "Attempting sync. URL defined:",
-            !!process.env.NEXT_PUBLIC_GOOGLE_SPREADSHEET_WEB_APP,
-          );
-        } catch (err) {
-          console.error("Sheet Sync Failed", err);
+          try {
+            await syncToSheet([leadForSheet]);
+            console.log("lead inserted in google sheet");
+          } catch (err) {
+            console.error("Sheet Sync Failed but Lead saved in DB", err);
+          }
         }
+      } else {
+        console.log("Lead already exists in CRM, skipping insert.");
       }
     }
 
     // --- PART C: WHATSAPP LOGIC ---
-    else if (entry?.changes?.[0]?.value) {
+    if (entry?.changes?.[0]?.value) {
       const value = entry.changes[0].value;
 
       console.log(value);
