@@ -265,7 +265,9 @@ export async function POST(req: NextRequest) {
           ]);
 
           const leadForSheet = {
-            created_at: new Date().toISOString(),
+            created_at: new Date().toLocaleString("en-US", {
+              timeZone: "Asia/Kolkata",
+            }),
             postal_code: findField(["post_code", "zip"]),
             is_filtered: true,
           };
