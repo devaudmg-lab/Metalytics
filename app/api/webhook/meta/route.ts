@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js"; // Direct import for Admin usage
 import { createHmac, timingSafeEqual } from "crypto";
+import { syncToSheet } from "@/utils/syncToSheet";
 
 // --- 1. Helper: Media Handler (Meta to Supabase Storage) ---
 async function processMedia(
   mediaId: string,
   mimeType: string,
-  supabaseAdmin: any
+  supabaseAdmin: any,
 ) {
   try {
     const waToken = process.env.META_ACCESS_TOKEN;
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest) {
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } }
+    { auth: { persistSession: false, autoRefreshToken: false } },
   );
 
   try {
@@ -114,7 +115,7 @@ export async function POST(req: NextRequest) {
       if (!leadId) {
         const token = process.env.META_PAGE_ACCESS_TOKEN;
         const res = await fetch(
-          `https://graph.facebook.com/v24.0/${psid}?fields=first_name,last_name&access_token=${token}`
+          `https://graph.facebook.com/v24.0/${psid}?fields=first_name,last_name&access_token=${token}`,
         );
         const profile = await res.json();
         const fullName =
@@ -164,12 +165,12 @@ export async function POST(req: NextRequest) {
       if (!existing) {
         const token = process.env.META_PAGE_ACCESS_TOKEN;
         const res = await fetch(
-          `https://graph.facebook.com/v24.0/${leadgenId}?access_token=${token}`
+          `https://graph.facebook.com/v24.0/${leadgenId}?access_token=${token}`,
         );
         const details = await res.json();
         const findField = (names: string[]) =>
           details.field_data?.find((f: any) =>
-            names.includes(f.name.toLowerCase())
+            names.includes(f.name.toLowerCase()),
           )?.values?.[0] || "";
 
         const { data: lead } = await supabaseAdmin
@@ -186,15 +187,26 @@ export async function POST(req: NextRequest) {
           .select("id")
           .single();
 
-        await supabaseAdmin
-          .from("meta_identities")
-          .insert([
-            {
-              lead_id: lead?.id,
-              meta_lead_id: leadgenId,
-              raw_metadata: details,
-            },
-          ]);
+        await supabaseAdmin.from("meta_identities").insert([
+          {
+            lead_id: lead?.id,
+            meta_lead_id: leadgenId,
+            raw_metadata: details,
+          },
+        ]);
+
+        // Construct the payload to match what syncToSheet expects
+        const leadForSheet = {
+          created_at: new Date().toISOString(),
+          postal_code: findField(["post_code", "zip"]),
+          // logic for is_filtered depends on your app's criteria
+          is_filtered: true,
+        };
+
+        // Call the sync function (awaiting is optional depending on if you want to block)
+        syncToSheet([leadForSheet]).catch((err) =>
+          console.error("Sheet Sync Failed", err),
+        );
       }
     }
 
@@ -203,7 +215,6 @@ export async function POST(req: NextRequest) {
       const value = entry.changes[0].value;
 
       console.log(value);
-      
 
       // 1. HANDLE STATUS UPDATES (Sent -> Delivered -> Read)
       if (value.statuses?.[0]) {
@@ -211,7 +222,6 @@ export async function POST(req: NextRequest) {
         const waMessageId = statusUpdate.id;
         const newStatus = statusUpdate.status; // 'delivered', 'read', 'failed', 'sent'
         console.log(newStatus);
-        
 
         // Update the message status based on the WhatsApp ID
         const { error: updateError } = await supabaseAdmin
@@ -244,7 +254,7 @@ export async function POST(req: NextRequest) {
           mediaUrl = await processMedia(
             mediaData.id,
             mediaData.mime_type,
-            supabaseAdmin
+            supabaseAdmin,
           );
         }
 

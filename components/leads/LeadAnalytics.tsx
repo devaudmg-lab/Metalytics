@@ -26,6 +26,7 @@ import {
   Activity,
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { syncToSheet } from "@/utils/syncToSheet";
 
 interface LeadData {
   created_at: string | Date;
@@ -38,38 +39,7 @@ interface HourlyGroup {
   [date: string]: number[];
 }
 
-const syncToSheet = async (payload: any[]) => {
-  const SCRIPT_URL = process.env.NEXT_PUBLIC_GOOGLE_SPREADSHEET_WEB_APP || "";
 
-  const cleanedPayload = payload.map((item) => {
-    let dateObj = new Date(item.created_at);
-
-    // Agar date invalid hai, toh aaj ki date use karo
-    if (isNaN(dateObj.getTime())) {
-      dateObj = new Date();
-    }
-
-    return {
-      // Sirf wahi data bhejo jo Sheet ko chahiye
-      date: dateObj.toLocaleDateString("en-US"), // MM/DD/YYYY format
-      hour: dateObj.getHours() + ":00",
-      postal_code: item.postal_code || "N/A",
-      status: item.is_filtered ? "Verified" : "Outside",
-    };
-  });
-
-  try {
-    await fetch(SCRIPT_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(cleanedPayload),
-    });
-    console.log("✅ Sync Done!");
-  } catch (error) {
-    console.error("❌ Sync Error:", error);
-  }
-};
 
 function MetricCard({ label, val, sub, icon, color, glow }: any) {
   return (
@@ -99,22 +69,6 @@ function MetricCard({ label, val, sub, icon, color, glow }: any) {
 
 export default function LeadAnalytics({ data }: { data: any[] }) {
   const [limitZips, setLimitZips] = useState(true);
-  console.log(data);
-  // Component ke andar ek local state banayein
-  const [lastSyncedTime, setLastSyncedTime] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (data && data.length > 0) {
-      const latestLead = data[data.length - 1];
-
-      // CONDITION: Agar is lead ka time hamare 'lastSyncedTime' se naya hai, tabhi bhejo
-      if (latestLead.created_at !== lastSyncedTime) {
-        console.log("Syncing new live lead...");
-        syncToSheet([latestLead]);
-        setLastSyncedTime(latestLead.created_at); // Yaad rakho ki ye sync ho gayi
-      }
-    }
-  }, [data]);
 
   const handleFullSync = async () => {
     if (!data || data.length === 0) return;
